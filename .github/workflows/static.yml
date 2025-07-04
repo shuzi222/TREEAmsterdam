@@ -1,9 +1,13 @@
-name: Tree
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main  # 当推送到 main 分支时触发部署
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -11,16 +15,13 @@ jobs:
     permissions:
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
       
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v3
+      
+    - name: Configure Pages
+      uses: actions/configure-pages@v4
       
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v2
@@ -28,5 +29,8 @@ jobs:
         path: '.'  # 上传整个仓库作为静态网站
 
     - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
       id: deployment
-      uses: actions/deploy-pages@v3
+      
+    - name: Show deployment URL
+      run: echo "Deployed to ${{ steps.deployment.outputs.page_url }}"
