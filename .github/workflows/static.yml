@@ -1,33 +1,39 @@
 name: tree ZFU
+
 on:
   push:
-    branches: [main]
+    branches: [main]  # 当推送到 main 分支时触发部署
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         
-      # 使用替代方法上传文件
-      - name: Prepare Artifact
-        run: |
-          tar -czf site.tar.gz .
-          
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3  # 使用与正确示例相同的v3版本
         with:
-          name: site-artifact
-          path: site.tar.gz
-          
-      - name: Deploy to Pages
+          path: '.'  # 上传整个仓库作为静态网站
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          artifact: site-artifact
-      
-      - name: Show deployment URL
-        run: echo "Deployed to ${{ steps.deployment.outputs.page_url }}"
