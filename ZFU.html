@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tree入金平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #1e1e2e;
+      --secondary: #2d2d44;
+      --accent: #f0c808;
+      --accent-dark: #d9b100;
+      --text: #f8f9fa;
+      --text-secondary: #adb5bd;
+      --success: #28a745;
+      --danger: #dc3545;
+      --card-bg: #252536;
+      --card-border: #3a3a5a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--primary), #12121f);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(45, 45, 68, 0.6);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(240, 200, 8, 0.3);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--card-border);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .tab-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      background: var(--secondary);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: var(--primary);
+    }
+
+    .tab:hover:not(.active) {
+      background: #3a3a5a;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      background: var(--secondary);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+
+    input {
+      flex: 1;
+      padding: 14px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1.1rem;
+    }
+
+    input:focus {
+      outline: none;
+    }
+
+    .token-symbol {
+      padding: 0 15px;
+      background: var(--accent);
+      color: var(--primary);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .info-box {
+      background: rgba(45, 45, 68, 0.6);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      font-size: 0.9rem;
+      border: 1px dashed var(--card-border);
+    }
+
+    .info-box p {
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .info-box span.value {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .connect-btn {
+      background: var(--success);
+      color: white;
+      margin-top: 0;
+    }
+
+    .disconnect-btn {
+      background: var(--danger);
+      color: white;
+      margin-top: 10px;
+    }
+
+    .wallet-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--secondary);
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .address {
+      font-family: monospace;
+      color: var(--accent);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70%;
+    }
+
+    .records-container {
+      margin-top: 30px;
+    }
+
+    .records-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .record-list {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .record-item {
+      padding: 15px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .record-item:last-child {
+      border-bottom: none;
+    }
+
+    .record-type {
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .bnb-type {
+      background: rgba(240, 185, 11, 0.2);
+      color: #f0b90b;
+    }
+
+    .usdt-type {
+      background: rgba(0, 172, 120, 0.2);
+      color: #00ac78;
+    }
+
+    .record-details {
+      text-align: right;
+    }
+
+    .record-amount {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .record-timestamp {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .wallet-info {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .address {
+        max-width: 100%;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .loader {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid var(--accent);
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Tree入金平台</h1>
+      <div class="subtitle">在该页面入金奖励GL积分</div>
+    </header>
+
+    <div class="wallet-card card">
+      <div class="card-header">
+        <div class="card-title">钱包连接</div>
+      </div>
+      <div class="wallet-info" id="walletInfo" style="display: none;">
+        <div>已连接钱包：<span class="address" id="walletAddress"></span></div>
+        <div>网络：<span id="networkInfo">BSC主网</span></div>
+      </div>
+      <button id="connectWallet" class="connect-btn">连接钱包</button>
+      <button id="disconnectWallet" class="disconnect-btn hidden">断开连接</button>
+    </div>
+
+    <div class="card-container">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">入金</div>
+        </div>
+
+        <div class="tab-container">
+          <div class="tab active" data-tab="bnb">使用BNB入金</div>
+          <div class="tab" data-tab="usdt">使用USDT入金</div>
+        </div>
+
+        <!-- BNB支付部分 -->
+        <div id="bnbSection">
+          <div class="input-group">
+            <label>输入BNB数量</label>
+            <div class="input-container">
+              <input type="number" id="bnbAmount" placeholder="0.0" min="0" step="0.001">
+              <div class="token-symbol">BNB</div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <p>兑换比例: <span class="value">1 BNB = 400 GL</span></p>
+            <p>您将获得: <span class="value" id="bnbGlAmount">0 GL</span></p>
+            <p>提示: <span class="value">有五分钟左右的延迟是正常现象</span></p>
+          </div>
+
+          <button id="buyWithBnb" disabled>入金</button>
+        </div>
+
+        <!-- USDT支付部分 -->
+        <div id="usdtSection" class="hidden">
+          <div class="input-group">
+            <label>输入USDT数量</label>
+            <div class="input-container">
+              <input type="number" id="usdtAmount" placeholder="0.0" min="0" step="1">
+              <div class="token-symbol">USDT</div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <p>兑换比例: <span class="value">1 USDT = 1 GL</span></p>
+            <p>您将获得: <span class="value" id="usdtGlAmount">0 GL</span></p>
+            <p>提示: <span class="value">有五分钟左右的延迟是正常现象</span></p>
+            <p>注意: 使用USDT支付需要先授权</p>
+          </div>
+
+          <button id="approveUsdt" disabled>授权USDT</button>
+          <button id="buyWithUsdt" disabled>入金</button>
+        </div>
+      </div>
+    </div>
+    <div class="info-box">请勿反复入金提现刷GL积分，我们会对异常账户采取扣除GL甚至取消GL积分计算</div>
+  </div>
+
+  <script>
+    // 配置信息
+    const config = {
+      glTokenAddress: "0x382056877621353B669072860cacB0A1091B113D", // 替换为实际部署的GL代币合约地址
+      usdtAddress: "0x55d398326f99059fF775485246999027B3197955", // BSC主网USDT地址
+      bnbToGlRate: 400,
+      usdtToGlRate: 1
+    };
+
+    // DOM元素
+    const connectWalletBtn = document.getElementById('connectWallet');
+    const disconnectWalletBtn = document.getElementById('disconnectWallet');
+    const walletInfo = document.getElementById('walletInfo');
+    const walletAddress = document.getElementById('walletAddress');
+    const networkInfo = document.getElementById('networkInfo');
+    const tabs = document.querySelectorAll('.tab');
+    const bnbSection = document.getElementById('bnbSection');
+    const usdtSection = document.getElementById('usdtSection');
+    const bnbAmountInput = document.getElementById('bnbAmount');
+    const usdtAmountInput = document.getElementById('usdtAmount');
+    const bnbGlAmount = document.getElementById('bnbGlAmount');
+    const usdtGlAmount = document.getElementById('usdtGlAmount');
+    const buyWithBnbBtn = document.getElementById('buyWithBnb');
+    const approveUsdtBtn = document.getElementById('approveUsdt');
+    const buyWithUsdtBtn = document.getElementById('buyWithUsdt');
+    const recordList = document.getElementById('recordList');
+
+    // 全局变量
+    let provider;
+    let signer;
+    let userAddress;
+    let glTokenContract;
+    let usdtContract;
+
+    // 初始化
+    async function init() {
+      // 检查是否安装了MetaMask
+      if (typeof window.ethereum === 'undefined') {
+        alert('请安装MetaMask钱包以使用此功能');
+        return;
+      }
+
+      // 设置事件监听器
+      connectWalletBtn.addEventListener('click', connectWallet);
+      disconnectWalletBtn.addEventListener('click', disconnectWallet);
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+      });
+
+      bnbAmountInput.addEventListener('input', updateBnbGlAmount);
+      usdtAmountInput.addEventListener('input', updateUsdtGlAmount);
+
+      buyWithBnbBtn.addEventListener('click', buyWithBnb);
+      approveUsdtBtn.addEventListener('click', approveUsdt);
+      buyWithUsdtBtn.addEventListener('click', buyWithUsdt);
+
+      // 尝试自动连接钱包
+      if (window.ethereum.selectedAddress) {
+        await connectWallet();
+      }
+    }
+
+    // 连接钱包
+    async function connectWallet() {
+      try {
+        // 请求账户访问权限
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        // 更新UI
+        walletAddress.textContent = userAddress;
+        walletInfo.style.display = 'flex';
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+
+        // 初始化合约
+        initContracts();
+
+        // 启用购买按钮
+        buyWithBnbBtn.disabled = false;
+        approveUsdtBtn.disabled = false;
+        buyWithUsdtBtn.disabled = false;
+
+        // 添加网络切换监听
+        window.ethereum.on('chainChanged', handleChainChanged);
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+        console.log('钱包已连接:', userAddress);
+      } catch (error) {
+        console.error('连接钱包失败:', error);
+        alert('连接钱包失败: ' + error.message);
+      }
+    }
+
+    // 断开钱包连接
+    function disconnectWallet() {
+      userAddress = null;
+      signer = null;
+      provider = null;
+
+      // 更新UI
+      walletInfo.style.display = 'none';
+      connectWalletBtn.classList.remove('hidden');
+      disconnectWalletBtn.classList.add('hidden');
+
+      // 禁用购买按钮
+      buyWithBnbBtn.disabled = true;
+      approveUsdtBtn.disabled = true;
+      buyWithUsdtBtn.disabled = true;
+
+      console.log('钱包已断开连接');
+    }
+
+    // 处理网络切换
+    function handleChainChanged(chainId) {
+      // 转换为十进制
+      const chainIdNum = parseInt(chainId, 16);
+      let networkName = '未知网络';
+
+      if (chainIdNum === 56) {
+        networkName = 'BSC主网';
+      } else if (chainIdNum === 97) {
+        networkName = 'BSC测试网';
+      }
+
+      networkInfo.textContent = networkName;
+      console.log('网络已切换:', networkName);
+
+      // 重新初始化合约
+      initContracts();
+    }
+
+    // 处理账户切换
+    function handleAccountsChanged(accounts) {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else {
+        userAddress = accounts[0];
+        walletAddress.textContent = userAddress;
+        console.log('账户已切换:', userAddress);
+      }
+    }
+
+    // 初始化合约
+    function initContracts() {
+      // GL代币合约ABI（简化版）
+      const glTokenAbi = [
+        "function buyWithBNB() payable",
+        "function buyWithUSDT(uint256 usdtAmount)",
+        "function getRecentRecords() view returns (tuple(address payer, bool isBNB, uint256 paidAmount, uint256 glReceived, uint256 timestamp)[])"
+      ];
+
+      // USDT合约ABI（简化版）
+      const usdtAbi = [
+        "function approve(address spender, uint256 amount) returns (bool)",
+        "function allowance(address owner, address spender) view returns (uint256)",
+        "function decimals() view returns (uint8)"
+      ];
+
+      // 创建合约实例
+      glTokenContract = new ethers.Contract(config.glTokenAddress, glTokenAbi, signer);
+      usdtContract = new ethers.Contract(config.usdtAddress, usdtAbi, signer);
+
+      console.log('合约已初始化');
+    }
+
+    // 切换选项卡
+    function switchTab(tab) {
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+      if (tab === 'bnb') {
+        bnbSection.classList.remove('hidden');
+        usdtSection.classList.add('hidden');
+      } else {
+        bnbSection.classList.add('hidden');
+        usdtSection.classList.remove('hidden');
+      }
+    }
+
+    // 更新BNB对应的GL数量
+    function updateBnbGlAmount() {
+      const bnbAmount = parseFloat(bnbAmountInput.value) || 0;
+      const glAmount = bnbAmount * config.bnbToGlRate;
+      bnbGlAmount.textContent = glAmount.toFixed(0) + ' GL';
+    }
+
+    // 更新USDT对应的GL数量
+    function updateUsdtGlAmount() {
+      const usdtAmount = parseFloat(usdtAmountInput.value) || 0;
+      const glAmount = usdtAmount * config.usdtToGlRate;
+      usdtGlAmount.textContent = glAmount.toFixed(0) + ' GL';
+    }
+
+    // 使用BNB购买GL
+    async function buyWithBnb() {
+      const bnbAmount = bnbAmountInput.value;
+      if (!bnbAmount || parseFloat(bnbAmount) <= 0) {
+        alert('请输入有效的BNB数量');
+        return;
+      }
+
+      try {
+        // 设置按钮状态
+        const originalText = buyWithBnbBtn.textContent;
+        buyWithBnbBtn.textContent = '处理中...';
+        buyWithBnbBtn.disabled = true;
+        buyWithBnbBtn.innerHTML = '处理中... <div class="loader"></div>';
+
+        // 将BNB转换为wei
+        const weiAmount = ethers.utils.parseEther(bnbAmount);
+
+        // 调用合约方法
+        const tx = await glTokenContract.buyWithBNB({
+          value: weiAmount
+        });
+
+        console.log('交易已发送:', tx.hash);
+
+        // 等待交易确认
+        await tx.wait();
+        console.log('交易已确认:', tx.hash);
+
+        alert('购买成功！');
+
+        // 重置按钮状态
+        buyWithBnbBtn.textContent = originalText;
+        buyWithBnbBtn.disabled = false;
+        buyWithBnbBtn.innerHTML = originalText;
+
+        // 清除输入
+        bnbAmountInput.value = '';
+        updateBnbGlAmount();
+
+        // 刷新交易记录
+        // fetchRecentRecords(); // 实际使用中取消注释
+      } catch (error) {
+        console.error('购买失败:', error);
+        alert('购买失败: ' + error.message);
+
+        // 重置按钮状态
+        buyWithBnbBtn.textContent = '使用BNB购买GL';
+        buyWithBnbBtn.disabled = false;
+        buyWithBnbBtn.innerHTML = '使用BNB购买GL';
+      }
+    }
+
+    // 授权USDT
+    async function approveUsdt() {
+      const usdtAmount = usdtAmountInput.value;
+      if (!usdtAmount || parseFloat(usdtAmount) <= 0) {
+        alert('请输入有效的USDT数量');
+        return;
+      }
+
+      try {
+        // 设置按钮状态
+        const originalText = approveUsdtBtn.textContent;
+        approveUsdtBtn.textContent = '授权中...';
+        approveUsdtBtn.disabled = true;
+        approveUsdtBtn.innerHTML = '授权中... <div class="loader"></div>';
+
+        // 获取USDT的小数位数
+        const decimals = await usdtContract.decimals();
+
+        // 计算授权数量
+        const amount = ethers.utils.parseUnits(usdtAmount, decimals);
+
+        // 调用授权方法
+        const tx = await usdtContract.approve(config.glTokenAddress, amount);
+
+        console.log('授权交易已发送:', tx.hash);
+
+        // 等待交易确认
+        await tx.wait();
+        console.log('授权交易已确认:', tx.hash);
+
+        alert('USDT授权成功！');
+
+        // 重置按钮状态
+        approveUsdtBtn.textContent = originalText;
+        approveUsdtBtn.disabled = false;
+        approveUsdtBtn.innerHTML = originalText;
+      } catch (error) {
+        console.error('授权失败:', error);
+        alert('授权失败: ' + error.message);
+
+        // 重置按钮状态
+        approveUsdtBtn.textContent = '授权USDT';
+        approveUsdtBtn.disabled = false;
+        approveUsdtBtn.innerHTML = '授权USDT';
+      }
+    }
+
+    // 使用USDT购买GL
+    async function buyWithUsdt() {
+      const usdtAmount = usdtAmountInput.value;
+      if (!usdtAmount || parseFloat(usdtAmount) <= 0) {
+        alert('请输入有效的USDT数量');
+        return;
+      }
+
+      try {
+        // 设置按钮状态
+        const originalText = buyWithUsdtBtn.textContent;
+        buyWithUsdtBtn.textContent = '处理中...';
+        buyWithUsdtBtn.disabled = true;
+        buyWithUsdtBtn.innerHTML = '处理中... <div class="loader"></div>';
+
+        // 获取USDT的小数位数
+        const decimals = await usdtContract.decimals();
+
+        // 计算购买数量
+        const amount = ethers.utils.parseUnits(usdtAmount, decimals);
+
+        // 调用合约方法
+        const tx = await glTokenContract.buyWithUSDT(amount);
+
+        console.log('交易已发送:', tx.hash);
+
+        // 等待交易确认
+        await tx.wait();
+        console.log('交易已确认:', tx.hash);
+
+        alert('购买成功！');
+
+        // 重置按钮状态
+        buyWithUsdtBtn.textContent = originalText;
+        buyWithUsdtBtn.disabled = false;
+        buyWithUsdtBtn.innerHTML = originalText;
+
+        // 清除输入
+        usdtAmountInput.value = '';
+        updateUsdtGlAmount();
+
+        // 刷新交易记录
+        // fetchRecentRecords(); // 实际使用中取消注释
+      } catch (error) {
+        console.error('购买失败:', error);
+        alert('购买失败: ' + error.message);
+
+        // 重置按钮状态
+        buyWithUsdtBtn.textContent = '使用USDT购买GL';
+        buyWithUsdtBtn.disabled = false;
+        buyWithUsdtBtn.innerHTML = '使用USDT购买GL';
+      }
+    }
+
+    // 获取最近的支付记录（示例函数）
+    async function fetchRecentRecords() {
+      try {
+        if (!glTokenContract) return;
+
+        const records = await glTokenContract.getRecentRecords();
+
+        // 清空记录列表
+        recordList.innerHTML = '';
+
+        // 添加新记录
+        records.forEach(record => {
+          const recordItem = document.createElement('div');
+          recordItem.className = 'record-item';
+
+          const tokenType = record.isBNB ? 'bnb' : 'usdt';
+          const tokenSymbol = record.isBNB ? 'BNB' : 'USDT';
+          const tokenClass = record.isBNB ? 'bnb-type' : 'usdt-type';
+
+          // 格式化金额
+          const paidAmount = record.isBNB ?
+            ethers.utils.formatEther(record.paidAmount) :
+            (record.paidAmount / 1e6).toFixed(2); // USDT 6位小数
+
+          // 格式化时间
+          const timestamp = new Date(record.timestamp * 1000);
+          const formattedTime = timestamp.toLocaleString();
+
+          recordItem.innerHTML = `
+                        <div class="record-type ${tokenClass}">${tokenSymbol}</div>
+                        <div class="record-details">
+                            <div class="record-amount">${paidAmount} ${tokenSymbol} → ${ethers.utils.formatUnits(record.glReceived, 18)} GL</div>
+                            <div class="record-timestamp">${formattedTime}</div>
+                        </div>
+                    `;
+
+          recordList.appendChild(recordItem);
+        });
+      } catch (error) {
+        console.error('获取记录失败:', error);
+      }
+    }
+
+    // 页面加载时初始化
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+
+</html>
