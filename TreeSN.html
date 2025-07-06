@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tree</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="js/ethers.5.7.2umd.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2962ff;
+      --secondary: #0d47a1;
+      --success: #00c853;
+      --danger: #ff1744;
+      --warning: #ffab00;
+      --dark: #121826;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --border: #2d3748;
+      --card-bg: #1a202c;
+      --body-bg: #0b0f19;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--body-bg);
+      color: var(--light);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .logo i {
+      font-size: 1.6rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 15px;
+      margin-left: 10px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--light);
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-left: auto;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-bg);
+      padding: 8px 15px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+    }
+
+    .wallet-address {
+      font-size: 0.8rem;
+      background: rgba(41, 98, 255, 0.15);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .wallet-address:hover {
+      background: rgba(41, 98, 255, 0.25);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .btn-warning {
+      background-color: var(--warning);
+      color: white;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 2fr 3fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .balance-card {
+      text-align: center;
+      min-width: 200px;
+    }
+
+    .balance-amount {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin: 10px 0;
+      color: var(--primary);
+    }
+
+    .balance-label {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+
+    .trading-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .trading-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .order-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+
+    input,
+    select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--light);
+      font-size: 0.95rem;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background-color: var(--primary);
+    }
+
+    .order-book {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .order-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .order-row.header {
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      background-color: var(--card-bg);
+    }
+
+    .bid {
+      color: var(--success);
+    }
+
+    .ask {
+      color: var(--danger);
+    }
+
+    .transaction-history {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .transaction-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .transaction-item.header {
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      background-color: var(--card-bg);
+    }
+
+    .buy {
+      color: var(--success);
+    }
+
+    .sell {
+      color: var(--danger);
+    }
+
+    .admin-section {
+      margin-top: 25px;
+    }
+
+    .withdraw-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr auto;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+
+    .withdraw-item.header {
+      font: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .online {
+      background-color: var(--success);
+    }
+
+    .offline {
+      background-color: var(--danger);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 450px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--light);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .form-tabs {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    .form-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .form-tab.active {
+      background: var(--primary);
+    }
+
+    .login-form .form-group {
+      margin-bottom: 15px;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 10px;
+    }
+
+    .wallet-connect-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .wallet-connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #f6851b;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .wallet-connected {
+      background: var(--success);
+    }
+
+    .wallet-connect-btn:hover {
+      opacity: 0.9;
+    }
+
+    .wallet-address {
+      font-size: 0.8rem;
+      background: rgba(41, 98, 255, 0.15);
+      padding: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .wallet-address:hover {
+      background: rgba(41, 98, 255, 0.25);
+    }
+
+    .address-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+
+    .address-box code {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 8px;
+    }
+
+    .invite-section {
+      margin-top: 25px;
+    }
+
+    .invite-card {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .invite-code-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .invite-code {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .copy-btn {
+      background: var(--primary);
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      opacity: 0.9;
+    }
+
+    .invite-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 8px 0;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      color: var(--gray);
+      font-size: 0.85rem;
+    }
+
+    .referral-list {
+      margin-top: 25px;
+    }
+
+    .referral-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .referral-item.header {
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      background-color: var(--card-bg);
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .asset-card {
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+    }
+
+    .asset-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .asset-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(41, 98, 255, 0.15);
+    }
+
+    .asset-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+
+    .asset-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .asset-balance {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin: 5px 0;
+      color: var(--primary);
+    }
+
+    .asset-value {
+      color: var(--gray);
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+
+    .asset-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .toast {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 2000;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--success);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--danger);
+    }
+
+    .toast.warning {
+      border-left: 4px solid var(--warning);
+    }
+
+    .websocket-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .connected {
+      background-color: var(--success);
+    }
+
+    .connecting {
+      background-color: var(--warning);
+    }
+
+    .disconnected {
+      background-color: var(--danger);
+    }
+
+    .kline-card {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      overflow: hidden;
+      min-width: 280px;
+    }
+
+    .kline-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-size: 1.1rem;
+      color: var(--gray);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .explore-section {
+      margin-top: 25px;
+    }
+
+    .explore-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .explore-tab {
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .explore-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .explore-content {
+      display: none;
+    }
+
+    .explore-content.active {
+      display: block;
+    }
+
+    .investment-grid,
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 15px;
+    }
+
+    .investment-card,
+    .event-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .investment-card h3,
+    .event-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .investment-card p,
+    .event-card p {
+      color: var(--gray);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+
+    .investment-card .btn,
+    .event-card .btn {
+      width: 100%;
+    }
+
+    .placeholder-card {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .balance-card,
+      .kline-card {
+        min-width: 100%;
+      }
+
+      .investment-grid,
+      .events-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav-links {
+        margin-left: 0;
+        margin-top: 10px;
+      }
+
+      .user-actions {
+        margin-left: 0;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- 头部导航 -->
+    <header>
+      <div class="logo">
+        <i class="fas fa-coins"></i>
+        <span>树教交易所-树酱的小金库</span>
+      </div>
+      <div class="nav-links">
+        <a :class="{ active: activeView === 'trade' }" @click="setActiveView('trade')">交易</a>
+        <a :class="{ active: activeView === 'assets' }" @click="setActiveView('assets')">资产</a>
+        <a :class="{ active: activeView === 'invite' }" @click="setActiveView('invite')">邀请</a>
+        <a href="https://t.s-chat.top/ZFU" class="btn btn-primary" target="_blank">入金</a>
+        <a v-if="user.isAdmin" :class="{ active: activeView === 'admin' }" @click="setActiveView('admin')">管理</a>
+      </div>
+      <div class="user-actions">
+        <div class="websocket-status">
+          <span class="connection-dot" :class="wsStatus"></span>
+          <span>{{ wsStatusText }}</span>
+        </div>
+        <div class="user-info" v-if="isLoggedIn">
+          <span>{{ user.username || '用户' }}</span>
+          <span class="wallet-address" @click="copyToClipboard(user.walletAddress)">
+            {{ truncateAddress(user.walletAddress) }}
+          </span>
+          <button class="btn btn-outline btn-sm" @click="logout">退出</button>
+        </div>
+        <button v-else class="btn btn-primary btn-sm" @click="openLoginModal">登录</button>
+      </div>
+    </header>
+
+    <!-- 主界面内容 -->
+    <div class="container">
+      <div v-if="!isLoggedIn" class="card">
+        <p class="card-title">欢迎来到树酱的金库</p>
+        <p>请点击右上角的“登录”按钮以查看您的账户信息和进行交易。</p>
+      </div>
+      <div v-else>
+        <!-- 交易视图 -->
+        <div class="view" :class="{ active: activeView === 'trade' }">
+          <div class="dashboard">
+            <div class="card balance-card">
+              <div class="balance-label">总资产 (USDT)</div>
+              <div class="balance-amount">{{ totalBalance.toFixed(2) }}</div>
+              <span class="status-indicator online"></span>
+              <span>系统运行中</span>
+            </div>
+          </div>
+          <div class="card kline-card">
+            <div class="card-header">
+              <h2 class="card-title">K线图 ({{ selectedPair }})</h2>
+            </div>
+            <div v-if="klineData.length === 0" class="kline-placeholder">
+              树叶迷路了呜
+            </div>
+            <div id="kline-chart" class="chart-container" v-else></div>
+          </div>
+        </div>
+        <div class="trading-section">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">交易</h2>
+              <div>
+                <select v-model="selectedPair"
+                  style="background: var(--card-bg); color: white; border: 1px solid var(--border); padding: 8px; border-radius: 6px;">
+                  <option value="BTC_USDT">BTC/USDT</option>
+                  <option value="BNB_USDT">BNB/USDT</option>
+                  <option value="BNB_BTC">BNB/BTC</option>
+                </select>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab" :class="{ active: activeTab === 'buy' }" @click="activeTab = 'buy'">买入</div>
+              <div class="tab" :class="{ active: activeTab === 'sell' }" @click="activeTab = 'sell'">卖出</div>
+            </div>
+            <div class="order-form">
+              <div class="form-group">
+                <label>价格 ({{ selectedPair.includes('BTC') && selectedPair !== 'BTC_USDT' ? 'BTC' : 'USDT' }})</label>
+                <input type="number" v-model="order.price" placeholder="输入价格">
+              </div>
+              <div class="form-group">
+                <label>数量</label>
+                <input type="number" v-model="order.amount" :placeholder="'输入' + selectedPair.split('_')[0] + '数量'">
+              </div>
+              <div class="form-group">
+                <label>总计</label>
+                <input type="text" :value="(order.price * order.amount).toFixed(2)" readonly>
+              </div>
+              <button class="btn" :class="activeTab === 'buy' ? 'btn-success' : 'btn-danger'" @click="placeOrder">
+                {{ activeTab === 'buy' ? '买入 ' : '卖出 ' }} {{ selectedPair.split('_')[0] }}
+              </button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">订单簿</h2>
+              <div>
+                <span>最新价格: <strong :class="lastPriceChange >= 0 ? 'bid' : 'ask'">{{ lastPrice.toFixed(2) }}</strong>
+                  {{ selectedPair.includes('BTC') && selectedPair !== 'BTC_USDT' ? 'BTC' : 'USDT' }}</span>
+              </div>
+            </div>
+            <div class="order-book">
+              <div class="order-row header">
+                <div>价格 ({{ selectedPair.includes('BTC') && selectedPair !== 'BTC_USDT' ? 'BTC' : 'USDT' }})</div>
+                <div>数量</div>
+                <div>总计</div>
+              </div>
+              <div class="order-row ask" v-for="(order, index) in orderBook.asks.slice(0, 8)" :key="'ask-' + index">
+                <div>{{ order.price.toFixed(2) }}</div>
+                <div>{{ order.amount.toFixed(6) }}</div>
+                <div>{{ (order.price * order.amount).toFixed(2) }}</div>
+              </div>
+              <div class="order-row" style="background: rgba(41, 98, 255, 0.1); font-weight: 600;">
+                <div>{{ lastPrice.toFixed(2) }}</div>
+                <div>{{ lastTradeAmount.toFixed(6) }}</div>
+                <div>{{ (lastPrice * lastTradeAmount).toFixed(2) }}</div>
+              </div>
+              <div class="order-row bid" v-for="(order, index) in orderBook.bids.slice(0, 8)" :key="'bid-' + index">
+                <div>{{ order.price.toFixed(2) }}</div>
+                <div>{{ order.amount.toFixed(6) }}</div>
+                <div>{{ (order.price * order.amount).toFixed(2) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">最近交易</h2>
+            <div>
+              <span>24h成交量: {{ dailyVolume.toFixed(2) }} {{ selectedPair.includes('BTC') && selectedPair !==
+                'BTC_USDT' ? 'BTC' : 'USDT' }}</span>
+            </div>
+          </div>
+          <div class="transaction-history">
+            <div class="transaction-item header">
+              <div>时间</div>
+              <div>交易对</div>
+              <div>价格</div>
+              <div>数量</div>
+            </div>
+            <div class="transaction-item" v-for="(trade, index) in recentTrades" :key="index">
+              <div>{{ trade.time }}</div>
+              <div>{{ trade.pair }}</div>
+              <div :class="trade.type === 'buy' ? 'buy' : 'sell'">{{ trade.price.toFixed(2) }}</div>
+              <div>{{ trade.amount.toFixed(6) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 资产视图 -->
+      <div class="view" :class="{ active: activeView === 'assets' }">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">我的资产</h2>
+            <div>
+              <span>总价值: {{ totalBalance.toFixed(2) }} USDT</span>
+            </div>
+          </div>
+          <div class="dashboard">
+            <div class="card balance-card">
+              <div class="balance-label">总资产 (USDT)</div>
+              <div class="balance-amount">{{ totalBalance.toFixed(2) }}</div>
+              <button class="btn btn-primary" @click="showTransactionHistoryModal">查看资金流水</button>
+            </div>
+          </div>
+          <div class="asset-grid">
+            <div class="asset-card" v-for="(balance, currency) in balances" :key="currency">
+              <div class="asset-header">
+                <div class="asset-icon">
+                  <img :src="getCurrencyIcon(currency)" :alt="currency + ' icon'">
+                </div>
+                <div class="asset-name">{{ currency }}</div>
+              </div>
+              <div class="asset-balance">{{ balance.toFixed(currency === 'BTC' ? 6 : 2) }}</div>
+              <div class="asset-value">≈ {{ calculateAssetValue(currency).toFixed(2) }} USDT</div>
+              <div class="asset-actions">
+                <button class="btn btn-outline" @click="showWithdraw(currency)">
+                  <i class="fas fa-arrow-up"></i> 提现
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card explore-section">
+          <div class="card-header">
+            <h2 class="card-title">探索</h2>
+          </div>
+          <div class="explore-tabs">
+            <div class="explore-tab" :class="{ active: activeExploreTab === 'investment' }"
+              @click="activeExploreTab = 'investment'">理财</div>
+            <div class="explore-tab" :class="{ active: activeExploreTab === 'events' }"
+              @click="activeExploreTab = 'events'">活动</div>
+          </div>
+          <div class="explore-content" :class="{ active: activeExploreTab === 'investment' }">
+            <div class="investment-grid">
+              <div class="investment-card" v-if="investmentData.current">
+                <h3>活期理财</h3>
+                <p>年化收益率: {{ investmentData.current.apy }}%</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div class="investment-card" v-if="investmentData.fixed">
+                <h3>定期理财</h3>
+                <p>年化收益率: {{ investmentData.fixed.apy }}%</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div class="investment-card" v-if="investmentData.btcLongTerm">
+                <h3>BTC超长期理财</h3>
+                <p>年化收益率: {{ investmentData.btcLongTerm.apy }}%</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div class="investment-card" v-if="investmentData.dualCurrency">
+                <h3>双币赢</h3>
+                <p>年化收益率: {{ investmentData.dualCurrency.apy }}%</p>
+                <p>价格: {{ investmentData.dualCurrency.price.toFixed(2) }} USDT</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div class="investment-card" v-if="investmentData.bottomHunting">
+                <h3>抄底宝</h3>
+                <p>年化收益率: {{ investmentData.bottomHunting.apy }}%</p>
+                <p>实现比例: {{ investmentData.bottomHunting.ratio }}%</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div class="investment-card" v-if="investmentData.profitTaking">
+                <h3>止盈宝</h3>
+                <p>年化收益率: {{ investmentData.profitTaking.apy }}%</p>
+                <p>实现比例: {{ investmentData.profitTaking.ratio }}%</p>
+                <button class="btn btn-primary">立即参与</button>
+              </div>
+              <div v-if="!hasInvestmentData" class="investment-card">
+                <p>树叶迷路了呜</p>
+              </div>
+            </div>
+          </div>
+          <div class="explore-content" :class="{ active: activeExploreTab === 'events' }">
+            <div class="events-grid">
+              <div class="event-card placeholder-card">
+                <h3>敬请期待</h3>
+                <p>更多精彩活动即将上线！</p>
+                <button class="btn btn-outline" disabled>即将推出</button>
+              </div>
+              <div class="event-card placeholder-card">
+                <h3>敬请期待</h3>
+                <p>更多精彩活动即将上线！</p>
+                <button class="btn btn-outline" disabled>即将推出</button>
+              </div>
+              <div class="event-card placeholder-card">
+                <h3>敬请期待</h3>
+                <p>更多精彩活动即将上线！</p>
+                <button class="btn btn-outline" disabled>即将推出</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 资金流水模态框 -->
+      <div class="modal" v-if="showTransactionHistoryModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>资金流水</h3>
+            <button @click="showTransactionHistoryModal = false" class="close-btn">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <select v-model="assetHistoryFilter"
+                style="background: var(--card-bg); color: white; border: 1px solid var(--border); padding: 8px; border-radius: 6px;">
+                <option value="all">全部</option>
+                <option value="withdraw">提现</option>
+                <option value="trade">交易</option>
+                <option value="bonus">奖励</option>
+              </select>
+            </div>
+            <div class="transaction-history">
+              <div class="transaction-item header">
+                <div>时间</div>
+                <div>类型</div>
+                <div>币种</div>
+                <div>数量</div>
+              </div>
+              <div class="transaction-item" v-for="(record, index) in filteredAssetHistory" :key="index">
+                <div>{{ record.time }}</div>
+                <div :class="getRecordClass(record.type)">{{ record.type }}</div>
+                <div>{{ record.currency }}</div>
+                <div :class="record.amount > 0 ? 'buy' : 'sell'">
+                  {{ record.amount > 0 ? '+' : '' }}{{ record.amount.toFixed(record.currency === 'BTC' ? 6 : 2) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 邀请视图 -->
+      <div class="view invite-section" :class="{ active: activeView === 'invite' }">
+        <div class="card invite-card">
+          <div class="card-header">
+            <h2 class="card-title">邀请好友</h2>
+            <div>
+              <span>已邀请: {{ inviteStats.total }} 人</span>
+            </div>
+          </div>
+          <div>
+            <h3>您的专属邀请码</h3>
+            <p>分享此邀请码给好友，双方都将获得奖励！</p>
+            <div class="invite-code-container">
+              <div class="invite-code">{{ user.inviteCode || '尚未生成邀请码' }}</div>
+              <button class="copy-btn" @click="copyInviteCode" v-if="user.inviteCode">
+                <i class="fas fa-copy"></i> 复制
+              </button>
+              <button class="btn btn-warning" @click="generateInviteCode" v-else>
+                <i class="fas fa-gift"></i> 生成邀请码 (消耗 0.0001 BTC)
+              </button>
+            </div>
+            <p class="note" v-if="!user.inviteCode">注意：生成邀请码需要消耗 0.0001 BTC</p>
+          </div>
+          <div class="invite-stats">
+            <div class="stat-card">
+              <div class="stat-label">已邀请人数</div>
+              <div class="stat-value">{{ inviteStats.total }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">活跃用户</div>
+              <div class="stat-value">{{ inviteStats.active }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">获得奖励 (USDT)</div>
+              <div class="stat-value">{{ inviteStats.rewards.toFixed(2) }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">获得奖励 (BTC)</div>
+              <div class="stat-value">{{ inviteStats.btcRewards.toFixed(6) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="card referral-list">
+          <div class="card-header">
+            <h2 class="card-title">邀请记录</h2>
+            <div>
+              <span>最近30天: {{ recentReferrals.length }} 人</span>
+            </div>
+          </div>
+          <div class="transaction-history">
+            <div class="referral-item header">
+              <div>时间</div>
+              <div>用户名</div>
+              <div>状态</div>
+              <div>奖励</div>
+            </div>
+            <div class="referral-item" v-for="(referral, index) in recentReferrals" :key="index">
+              <div>{{ referral.time }}</div>
+              <div>{{ referral.username }}</div>
+              <div :class="referral.status === '已激活' ? 'buy' : 'gray'">{{ referral.status }}</div>
+              <div class="buy">+{{ referral.reward }} {{ referral.currency }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管理员视图 -->
+      <div class="view admin-section" :class="{ active: activeView === 'admin' }" v-if="user.isAdmin">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">提现审核</h2>
+            <span>待处理: {{ pendingWithdrawals.length }}</span>
+          </div>
+          <div class="withdraw-item header">
+            <div>用户</div>
+            <div>币种</div>
+            <div>数量</div>
+            <div>地址</div>
+            <div>操作</div>
+          </div>
+          <div class="withdraw-item" v-for="(withdrawal, index) in pendingWithdrawals" :key="index">
+            <div>{{ withdrawal.user }}</div>
+            <div>{{ withdrawal.currency }}</div>
+            <div>{{ withdrawal.amount.toFixed(6) }}</div>
+            <div class="address">{{ withdrawal.address }}</div>
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-success" @click="approveWithdrawal(withdrawal.id)">
+                <i class="fas fa-check"></i> 批准
+              </button>
+              <button class="btn btn-sm btn-danger" @click="rejectWithdrawal(withdrawal.id)">
+                <i class="fas fa-times"></i> 拒绝
+              </button>
+            </div>
+          </div>
+          <div v-if="pendingWithdrawals.length === 0" style="text-align: center; padding: 15px; color: var(--gray);">
+            没有待处理的提现申请
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">用户管理</h2>
+            <span>总用户数: {{ adminStats.totalUsers }}</span>
+          </div>
+          <div class="form-group" style="margin-bottom: 15px;">
+            <input type="text" v-model="adminSearch" placeholder="搜索用户ID或用户名">
+          </div>
+          <div class="transaction-history">
+            <div class="transaction-item header">
+              <div>用户ID</div>
+              <div>用户名</div>
+              <div>注册时间</div>
+              <div>状态</div>
+              <div>操作</div>
+            </div>
+            <div class="transaction-item" v-for="(user, index) in filteredAdminUsers" :key="index">
+              <div>UID{{ 10000 + index }}</div>
+              <div>{{ user.username }}</div>
+              <div>{{ user.registerTime }}</div>
+              <div :class="user.active ? 'buy' : 'sell'">{{ user.active ? '正常' : '冻结' }}</div>
+              <div>
+                <button class="btn btn-sm btn-outline" @click="toggleUserStatus(user)">
+                  {{ user.active ? '冻结' : '解冻' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提现模态框 -->
+    <div class="modal" v-if="showWithdrawModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ withdrawal.currency }} 提现申请</h3>
+          <button @click="showWithdrawModal = false" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>提现地址</label>
+            <input type="text" v-model="withdrawal.address" placeholder="输入提现地址">
+          </div>
+          <div class="form-group">
+            <label>数量</label>
+            <input type="number" v-model="withdrawal.amount" :placeholder="'最大 ' + balances[withdrawal.currency]">
+          </div>
+          <button class="btn btn-primary" @click="submitWithdrawal">
+            <i class="fas fa-paper-plane"></i> 提交申请
+          </button>
+          <p class="note">注意：提现操作需要邮件确认，请确保您的邮箱已验证</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div class="modal" v-if="showLoginModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ activeForm === 'login' ? '登录' : '注册' }}</h3>
+          <button class="close-btn" @click="showLoginModal = false">×</button>
+        </div>
+        <div class="form-tabs">
+          <div class="form-tab" :class="{ active: activeForm === 'login' }" @click="activeForm = 'login'">登录</div>
+          <div class="form-tab" :class="{ active: activeForm === 'register' }" @click="activeForm = 'register'">注册
+          </div>
+        </div>
+
+        <!-- 登录表单 -->
+        <form class="login-form" @submit.prevent="login" v-if="activeForm === 'login'">
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" v-model="loginData.username" placeholder="输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" v-model="loginData.password" placeholder="输入密码" required>
+          </div>
+          <div class="wallet-connect-section">
+            <button class="wallet-connect-btn" :class="{ 'wallet-connected': walletConnected }"
+              @click.prevent="connectWallet">
+              <i class="fas fa-wallet"></i>
+              {{ walletConnected ? '钱包已连接' : '连接钱包' }}
+            </button>
+            <div v-if="walletConnected" class="wallet-address" @click="copyToClipboard(walletAddress)">
+              {{ truncateAddress(walletAddress) }}
+            </div>
+          </div>
+          <button class="btn btn-primary login-btn" type="submit" :disabled="!walletConnected">登录</button>
+        </form>
+
+        <!-- 注册表单 -->
+        <form class="login-form" @submit.prevent="register" v-else>
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" v-model="registerData.username" placeholder="输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" v-model="registerData.password" placeholder="输入密码" required>
+          </div>
+          <div class="form-group">
+            <label>邀请码</label>
+            <input type="text" v-model="registerData.inviteCode" placeholder="输入邀请码" required>
+          </div>
+          <button class="wallet-connect-btn" :class="{ 'wallet-connected': walletConnected }"
+            @click.prevent="connectWallet">
+            <i class="fas fa-wallet"></i>
+            {{ walletConnected ? '钱包已连接' : '连接钱包' }}
+          </button>
+          <div v-if="walletConnected" class="wallet-address" @click="copyToClipboard(walletAddress)">
+            {{ truncateAddress(walletAddress) }}
+          </div>
+          <button class="btn btn-primary login-btn" type="submit" :disabled="!walletConnected">注册</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast" :class="[toastClass, { show: toastMessage }]">
+      <i :class="toastIcon"></i>
+      {{ toastMessage }}
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+
+    createApp({
+      setup() {
+        // 用户登录状态
+        const isLoggedIn = ref(false);
+        const activeForm = ref('login');
+        const walletConnected = ref(false);
+        const walletAddress = ref('');
+        const showLoginModal = ref(false);
+
+        // 登录数据
+        const loginData = reactive({
+          username: '',
+          password: '',
+        });
+
+        // 注册数据
+        const registerData = reactive({
+          username: '',
+          password: '',
+          inviteCode: '',
+        });
+
+        // WebSocket状态
+        const wsStatus = ref('disconnected');
+        const wsStatusText = ref('未连接');
+
+        // Toast通知
+        const toastMessage = ref('');
+        const toastClass = ref('');
+        const toastIcon = ref('');
+
+        // K线图数据
+        const klineData = ref([]);
+        let candlestickSeries = null;
+
+        // 资金流水模态框
+        const showTransactionHistoryModal = ref(false);
+
+        // 探索选项卡
+        const activeExploreTab = ref('investment');
+
+        // 理财产品数据
+        const investmentData = reactive({
+          current: null,
+          fixed: null,
+          btcLongTerm: null,
+          dualCurrency: null,
+          bottomHunting: null,
+          profitTaking: null,
+        });
+
+        // 是否有理财数据
+        const hasInvestmentData = computed(() => {
+          return Object.values(investmentData).some(data => data !== null);
+        });
+
+        // 显示Toast
+        const showToast = (message, type = 'success') => {
+          toastMessage.value = message;
+          toastClass.value = type;
+          toastIcon.value =
+            type === 'success' ? 'fas fa-check-circle' :
+              type === 'error' ? 'fas fa-exclamation-circle' :
+                'fas fa-info-circle';
+
+          setTimeout(() => {
+            const toast = document.querySelector('.toast');
+            if (toast) toast.classList.add('show');
+          }, 100);
+
+          setTimeout(() => {
+            const toast = document.querySelector('.toast');
+            if (toast) toast.classList.remove('show');
+            setTimeout(() => {
+              toastMessage.value = '';
+            }, 300);
+          }, 3000);
+        };
+
+        // 显示登录模态框
+        const openLoginModal = () => {
+          showLoginModal.value = true;
+          activeForm.value = 'login';
+        };
+
+        // 复制到剪贴板
+        const copyToClipboard = (text) => {
+          navigator.clipboard.writeText(text);
+          showToast('已复制到剪贴板', 'success');
+        };
+
+        // 地址截断显示
+        const truncateAddress = (address) => {
+          if (!address) return '';
+          return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        };
+
+        // API请求封装
+        const apiRequest = async (endpoint, method = 'GET', data = null) => {
+          const url = `/api${endpoint}`;
+          const headers = {
+            'Content-Type': 'application/json',
+          };
+
+          if (isLoggedIn.value) {
+            headers['Authorization'] = `Bearer ${localStorage.getItem('jwt')}`;
+          }
+
+          const config = { method, headers };
+          if (data) config.body = JSON.stringify(data);
+
+          try {
+            const response = await fetch(url, config);
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.message || '请求失败');
+            }
+            return await response.json();
+          } catch (error) {
+            showToast(`API错误: ${error.message}`, 'error');
+            throw error;
+          }
+        };
+
+        // 用户信息
+        const user = reactive({
+          username: '',
+          isAdmin: false,
+          inviteCode: '',
+          walletAddress: ''
+        });
+
+        // 当前活动视图
+        const activeView = ref('trade');
+
+        // 设置活动视图
+        const setActiveView = (view) => {
+          activeView.value = view;
+        };
+
+        // 用户资产
+        const balances = reactive({
+          BTC: 0,
+          USDT: 0,
+          BNB: 0
+        });
+
+        // 资产历史记录
+        const assetHistory = ref([]);
+        const assetHistoryFilter = ref('all');
+
+        // 过滤资产历史记录
+        const filteredAssetHistory = computed(() => {
+          if (assetHistoryFilter.value === 'all') return assetHistory.value;
+          return assetHistory.value.filter(record =>
+            record.type.toLowerCase().includes(assetHistoryFilter.value)
+          );
+        });
+
+        // 获取记录类型样式类
+        const getRecordClass = (type) => {
+          switch (type) {
+            case '奖励': return 'buy';
+            case '提现': return 'sell';
+            case '交易': return '';
+            default: return '';
+          }
+        };
+
+        // 总资产计算
+        const totalBalance = computed(() => {
+          return balances.BTC * lastPrice.value +
+            balances.USDT +
+            balances.BNB * 300;
+        });
+
+        // 计算资产价值
+        const calculateAssetValue = (currency) => {
+          const prices = {
+            BTC: lastPrice.value,
+            USDT: 1,
+            BNB: 300
+          };
+          return balances[currency] * prices[currency];
+        };
+
+        // 获取币种图标
+        const getCurrencyIcon = (currency) => {
+          const icons = {
+            BTC: 'img/BTC.webp',
+            USDT: 'img/USDT.webp',
+            BNB: 'img/BNB.webp'
+          };
+          return icons[currency] || 'img/USDT.webp';
+        };
+
+        // 交易相关状态
+        const selectedPair = ref('BTC_USDT');
+        const activeTab = ref('buy');
+        const order = reactive({
+          price: 0,
+          amount: 0
+        });
+
+        // 订单簿数据
+        const orderBook = reactive({
+          bids: [],
+          asks: []
+        });
+
+        // 交易数据
+        const lastPrice = ref(34250.75);
+        const lastPriceChange = ref(0.75);
+        const lastTradeAmount = ref(0.025);
+        const dailyVolume = ref(1254320.50);
+        const recentTrades = ref([]);
+
+        // 提现审核数据
+        const pendingWithdrawals = ref([]);
+
+        // 模态框状态
+        const showWithdrawModal = ref(false);
+        const withdrawal = reactive({
+          currency: 'BTC',
+          address: '',
+          amount: 0
+        });
+
+        // 邀请功能相关数据
+        const inviteStats = reactive({
+          total: 0,
+          active: 0,
+          rewards: 0,
+          btcRewards: 0
+        });
+
+        const recentReferrals = ref([]);
+
+        // 管理员数据
+        const adminStats = reactive({
+          totalUsers: 0,
+          activeUsers: 0,
+          dailyTrades: 0
+        });
+
+        const adminUsers = ref([]);
+        const adminSearch = ref('');
+        const filteredAdminUsers = computed(() => {
+          if (!adminSearch.value) return adminUsers.value;
+          return adminUsers.value.filter(user =>
+            user.username.toLowerCase().includes(adminSearch.value.toLowerCase())
+          );
+        });
+
+        // 初始化K线图
+        const initKlineChart = () => {
+          const chartContainer = document.getElementById('kline-chart');
+          if (!chartContainer) return;
+
+          const chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.offsetWidth,
+            height: chartContainer.offsetHeight,
+            layout: {
+              backgroundColor: '#1a202c',
+              textColor: '#f8f9fa',
+            },
+            grid: {
+              vertLines: { color: 'rgba(255, 255, 255, 0.1)' },
+              horzLines: { color: 'rgba(255, 255, 255, 0.1)' },
+            },
+            timeScale: {
+              timeVisible: true,
+              secondsVisible: false,
+            },
+            rightPriceScale: {
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+            crosshair: {
+              mode: LightweightCharts.CrosshairMode.Normal,
+            },
+          });
+
+          candlestickSeries = chart.addCandlestickSeries({
+            upColor: '#00c853',
+            downColor: '#ff1744',
+            borderVisible: false,
+            wickUpColor: '#00c853',
+            wickDownColor: '#ff1744',
+          });
+
+          // 加载初始K线数据
+          apiRequest('/kline?pair=' + selectedPair.value).then(data => {
+            klineData.value = data;
+            candlestickSeries.setData(data);
+          });
+
+          // 调整图表大小
+          window.addEventListener('resize', () => {
+            chart.resize(chartContainer.offsetWidth, chartContainer.offsetHeight);
+          });
+        };
+
+        // WebSocket连接
+        let ws = null;
+
+        // 初始化WebSocket
+        const initWebSocket = () => {
+          if (!isLoggedIn.value) return;
+          wsStatus.value = 'connecting';
+          wsStatusText.value = '连接中...';
+
+          const wsUrl = 'wss://api.crypto-exchange.com/ws';
+          ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            wsStatus.value = 'connected';
+            wsStatusText.value = '已连接';
+            const token = localStorage.getItem('jwt');
+            if (token) {
+              ws.send(JSON.stringify({ action: 'auth', token }));
+            }
+            ws.send(JSON.stringify({
+              action: 'subscribe',
+              channels: ['orderbook:' + selectedPair.value, 'user_balance', 'personal_orders', 'kline:' + selectedPair.value]
+            }));
+          };
+
+          ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            handleWebSocketMessage(message);
+          };
+
+          ws.onerror = (error) => {
+            console.error('WebSocket错误:', error);
+            wsStatus.value = 'disconnected';
+            wsStatusText.value = '连接错误';
+          };
+
+          ws.onclose = () => {
+            wsStatus.value = 'disconnected';
+            wsStatusText.value = '连接已关闭';
+          };
+        };
+
+        // 处理WebSocket消息
+        const handleWebSocketMessage = (message) => {
+          switch (message.channel) {
+            case 'orderbook':
+              Object.assign(orderBook, message.data);
+              break;
+            case 'user_balance':
+              Object.assign(balances, message.balances);
+              if (message.delta) {
+                const now = new Date();
+                const timeStr = now.toISOString().split('T')[1].substring(0, 8);
+                assetHistory.value.unshift({
+                  time: timeStr,
+                  type: '交易',
+                  currency: message.delta.currency,
+                  amount: message.delta.amount
+                });
+              }
+              break;
+            case 'personal_orders':
+              break;
+            case 'kline':
+              if (candlestickSeries) {
+                klineData.value.push(message.data);
+                candlestickSeries.update(message.data);
+              }
+              break;
+            default:
+              console.log('未处理的WebSocket消息:', message);
+          }
+        };
+
+        // 连接钱包
+        const connectWallet = async () => {
+          if (window.ethereum) {
+            try {
+              const provider = new ethers.providers.Web3Provider(window.ethereum);
+              await provider.send('eth_requestAccounts', []);
+              const signer = provider.getSigner();
+              walletAddress.value = await signer.getAddress();
+              walletConnected.value = true;
+              showToast('钱包已连接', 'success');
+              localStorage.setItem('walletAddress', walletAddress.value);
+            } catch (error) {
+              showToast('钱包连接失败: ' + error.message, 'error');
+            }
+          } else {
+            showToast('未检测到钱包扩展，请安装MetaMask', 'error');
+          }
+        };
+
+        // 登录功能
+        const login = async () => {
+          try {
+            if (walletConnected.value) {
+              const provider = new ethers.providers.Web3Provider(window.ethereum);
+              const signer = provider.getSigner();
+              const message = `Crypto Exchange Login: ${Date.now()}`;
+              const signature = await signer.signMessage(message);
+              loginData.walletAddress = walletAddress.value;
+              loginData.signature = signature;
+              loginData.message = message;
+            }
+
+            const response = await apiRequest('/auth/login', 'POST', loginData);
+            localStorage.setItem('jwt', response.token);
+
+            user.username = response.user.username;
+            user.isAdmin = response.user.isAdmin;
+            user.inviteCode = response.user.inviteCode;
+            user.walletAddress = response.user.walletAddress;
+
+            isLoggedIn.value = true;
+            showLoginModal.value = false;
+            initWebSocket();
+            initKlineChart();
+            initData();
+            showToast('登录成功！', 'success');
+          } catch (error) {
+            showToast(error.message || '登录失败', 'error');
+          }
+        };
+
+        // 注册功能
+        const register = async () => {
+          if (!walletConnected.value) {
+            showToast('请先连接钱包', 'error');
+            return;
+          }
+
+          try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const message = `Crypto Exchange Registration: ${Date.now()}`;
+            const signature = await signer.signMessage(message);
+
+            const response = await apiRequest('/auth/register', 'POST', {
+              ...registerData,
+              walletAddress: walletAddress.value,
+              message: message,
+              signature: signature
+            });
+
+            loginData.username = registerData.username;
+            loginData.password = registerData.password;
+            await login();
+          } catch (error) {
+            showToast(`注册失败: ${error.message}`, 'error');
+          }
+        };
+
+        // 下单功能
+        const placeOrder = async () => {
+          if (order.price <= 0 || order.amount <= 0) {
+            showToast('请输入有效的价格和数量', 'error');
+            return;
+          }
+
+          try {
+            const response = await apiRequest('/orders/place', 'POST', {
+              pair: selectedPair.value,
+              type: activeTab.value,
+              price: order.price,
+              amount: order.amount
+            });
+
+            showToast(`订单已提交！订单号: ${response.orderId}`, 'success');
+
+            const type = activeTab.value;
+            const pair = selectedPair.value;
+            const baseCurrency = pair.split('_')[0];
+            const quoteCurrency = pair.split('_')[1];
+
+            const now = new Date();
+            const timeStr = now.toISOString().split('T')[1].substring(0, 8);
+
+            recentTrades.value.unshift({
+              time: timeStr,
+              pair: pair,
+              type: type,
+              price: order.price,
+              amount: order.amount
+            });
+
+            assetHistory.value.unshift({
+              time: timeStr,
+              type: '交易',
+              currency: baseCurrency,
+              amount: type === 'buy' ? order.amount : -order.amount
+            });
+
+            assetHistory.value.unshift({
+              time: timeStr,
+              type: '交易',
+              currency: quoteCurrency,
+              amount: type === 'buy' ? -(order.price * order.amount) : (order.price * order.amount)
+            });
+
+            lastPrice.value = order.price;
+            lastTradeAmount.value = order.amount;
+
+            order.price = lastPrice.value;
+            order.amount = 0;
+
+            // 更新K线数据
+            const candleTime = Math.floor(Date.now() / 1000);
+            const lastCandle = klineData.value[klineData.value.length - 1] || { close: lastPrice.value };
+            const open = lastCandle.close;
+            const close = order.price;
+            const high = Math.max(open, close);
+            const low = Math.min(open, close);
+            const volume = order.amount;
+
+            const newCandle = { time: candleTime, open, high, low, close, volume };
+            klineData.value.push(newCandle);
+            if (candlestickSeries) {
+              candlestickSeries.update(newCandle);
+            }
+          } catch (error) {
+            showToast(error.message || '下单失败', 'error');
+          }
+        };
+
+        // 提现申请
+        const submitWithdrawal = async () => {
+          if (!withdrawal.address) {
+            showToast('请输入提现地址', 'error');
+            return;
+          }
+
+          if (withdrawal.amount <= 0 || withdrawal.amount > balances[withdrawal.currency]) {
+            showToast('请输入有效的提现金额', 'error');
+            return;
+          }
+
+          try {
+            const response = await apiRequest('/wallet/withdraw', 'POST', {
+              currency: withdrawal.currency,
+              amount: withdrawal.amount,
+              address: withdrawal.address
+            });
+
+            showToast(response.message, 'success');
+
+            const now = new Date();
+            const timeStr = now.toISOString().split('T')[1].substring(0, 8);
+
+            assetHistory.value.unshift({
+              time: timeStr,
+              type: '提现',
+              currency: withdrawal.currency,
+              amount: -withdrawal.amount
+            });
+
+            withdrawal.address = '';
+            withdrawal.amount = 0;
+            showWithdrawModal.value = false;
+          } catch (error) {
+            showToast(error.message || '提现申请失败', 'error');
+          }
+        };
+
+        // 提现审核操作
+        const approveWithdrawal = async (id) => {
+          try {
+            const response = await apiRequest('/admin/withdrawals/process', 'POST', {
+              id: id,
+              action: 'approve'
+            });
+
+            showToast(response.message, 'success');
+
+            const index = pendingWithdrawals.value.findIndex(w => w.id === id);
+            if (index !== -1) {
+              pendingWithdrawals.value.splice(index, 1);
+            }
+          } catch (error) {
+            showToast(error.message || '处理失败', 'error');
+          }
+        };
+
+        const rejectWithdrawal = async (id) => {
+          try {
+            const response = await apiRequest('/admin/withdrawals/process', 'POST', {
+              id: id,
+              action: 'reject'
+            });
+
+            showToast(response.message, 'success');
+
+            const index = pendingWithdrawals.value.findIndex(w => w.id === id);
+            if (index !== -1) {
+              pendingWithdrawals.value.splice(index, 1);
+            }
+          } catch (error) {
+            showToast(error.message || '处理失败', 'error');
+          }
+        };
+
+        // 显示提现模态框
+        const showWithdraw = (currency) => {
+          withdrawal.currency = currency;
+          showWithdrawModal.value = true;
+        };
+
+        // 显示资金流水模态框
+        const showTransactionHistoryModalFn = () => {
+          showTransactionHistoryModal.value = true;
+        };
+
+        // 获取网络名称
+        const getNetworkName = (currency) => {
+          const networks = {
+            BTC: 'Bitcoin',
+            USDT: 'Ethereum ERC-20',
+            BNB: 'Binance Smart Chain'
+          };
+          return networks[currency] || '未知网络';
+        };
+
+        // 获取理财产品数据
+        const fetchInvestmentData = async () => {
+          try {
+            const data = await apiRequest('/investments');
+            Object.assign(investmentData, data);
+          } catch (error) {
+            showToast('获取理财数据失败', 'error');
+          }
+        };
+
+        // 生成邀请码
+        const generateInviteCode = async () => {
+          if (balances.BTC < 0.0001) {
+            showToast('BTC余额不足，无法生成邀请码', 'error');
+            return;
+          }
+
+          try {
+            const response = await apiRequest('/invite/generate', 'POST');
+            user.inviteCode = response.code;
+
+            const now = new Date();
+            const timeStr = now.toISOString().split('T')[1].substring(0, 8);
+
+            assetHistory.value.unshift({
+              time: timeStr,
+              type: '邀请码生成',
+              currency: response.cost.currency,
+              amount: -response.cost.amount
+            });
+
+            balances.BTC -= response.cost.amount;
+            showToast('邀请码生成成功！', 'success');
+          } catch (error) {
+            showToast(error.message || '生成邀请码失败', 'error');
+          }
+        };
+
+        // 复制邀请码
+        const copyInviteCode = () => {
+          if (user.inviteCode) {
+            copyToClipboard(user.inviteCode);
+          }
+        };
+
+        // 退出登录
+        const logout = () => {
+          isLoggedIn.value = false;
+          user.username = '';
+          user.isAdmin = false;
+          user.inviteCode = '';
+          user.walletAddress = '';
+          walletConnected.value = false;
+          walletAddress.value = '';
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('walletAddress');
+          if (ws) {
+            ws.close();
+          }
+          Object.keys(balances).forEach(key => balances[key] = 0);
+          showToast('已退出登录', 'success');
+          showLoginModal.value = true;
+        };
+
+        // 切换用户状态
+        const toggleUserStatus = async (user) => {
+          try {
+            const response = await apiRequest('/admin/users/toggle', 'POST', {
+              username: user.username,
+              active: !user.active
+            });
+            user.active = !user.active;
+            showToast(`用户 ${user.username} 已${user.active ? '解冻' : '冻结'}`, 'success');
+          } catch (error) {
+            showToast(error.message || '操作失败', 'error');
+          }
+        };
+
+        // 初始化数据
+        const initData = async () => {
+          try {
+            if (isLoggedIn.value) {
+              const balancesResponse = await apiRequest('/balances');
+              Object.assign(balances, balancesResponse);
+
+              const withdrawalsResponse = await apiRequest('/admin/withdrawals/pending');
+              pendingWithdrawals.value = withdrawalsResponse;
+
+              const inviteStatsResponse = await apiRequest('/invite/stats');
+              Object.assign(inviteStats, inviteStatsResponse);
+
+              const referralsResponse = await apiRequest('/invite/referrals');
+              recentReferrals.value = referralsResponse;
+
+              const adminUsersResponse = await apiRequest('/admin/users');
+              adminUsers.value = adminUsersResponse;
+              adminStats.totalUsers = adminUsers.value.length;
+              adminStats.activeUsers = adminUsers.value.filter(u => u.active).length;
+
+              await fetchInvestmentData();
+            }
+          } catch (error) {
+            showToast('初始化数据失败', 'error');
+          }
+        };
+
+        // 监听交易对变化
+        watch(selectedPair, () => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              action: 'unsubscribe',
+              channels: ['orderbook:' + selectedPair.value, 'kline:' + selectedPair.value]
+            }));
+            ws.send(JSON.stringify({
+              action: 'subscribe',
+              channels: ['orderbook:' + selectedPair.value, 'kline:' + selectedPair.value]
+            }));
+          }
+          klineData.value = [];
+          if (candlestickSeries) {
+            candlestickSeries.setData([]);
+            apiRequest('/kline?pair=' + selectedPair.value).then(data => {
+              klineData.value = data;
+              candlestickSeries.setData(data);
+            });
+          }
+        });
+
+        // 初始化
+        onMounted(() => {
+          const token = localStorage.getItem('jwt');
+          const storedWallet = localStorage.getItem('walletAddress');
+          if (token && storedWallet) {
+            isLoggedIn.value = true;
+            walletConnected.value = true;
+            walletAddress.value = storedWallet;
+            user.walletAddress = storedWallet;
+            initData();
+            initWebSocket();
+            initKlineChart();
+          }
+        });
+
+        return {
+          isLoggedIn,
+          activeView,
+          setActiveView,
+          user,
+          balances,
+          totalBalance,
+          calculateAssetValue,
+          getCurrencyIcon,
+          selectedPair,
+          activeTab,
+          order,
+          orderBook,
+          lastPrice,
+          lastPriceChange,
+          lastTradeAmount,
+          dailyVolume,
+          recentTrades,
+          placeOrder,
+          pendingWithdrawals,
+          showWithdrawModal,
+          withdrawal,
+          submitWithdrawal,
+          showWithdraw,
+          approveWithdrawal,
+          rejectWithdrawal,
+          activeForm,
+          loginData,
+          registerData,
+          showLoginModal,
+          openLoginModal,
+          login,
+          register,
+          walletConnected,
+          walletAddress,
+          connectWallet,
+          truncateAddress,
+          copyToClipboard,
+          toastMessage,
+          toastClass,
+          toastIcon,
+          wsStatus,
+          wsStatusText,
+          klineData,
+          inviteStats,
+          recentReferrals,
+          adminStats,
+          adminUsers,
+          adminSearch,
+          filteredAdminUsers,
+          toggleUserStatus,
+          generateInviteCode,
+          copyInviteCode,
+          logout,
+          assetHistory,
+          assetHistoryFilter,
+          filteredAssetHistory,
+          getRecordClass,
+          showTransactionHistoryModal,
+          showTransactionHistoryModalFn,
+          activeExploreTab,
+          investmentData,
+          hasInvestmentData,
+          getNetworkName
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>
