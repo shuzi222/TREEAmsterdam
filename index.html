@@ -1152,7 +1152,7 @@
                 <i class="fas fa-copy"></i> 复制
               </button>
               <button class="btn btn-warning" @click="generateInviteCode" v-else>
-                <i class="fas fa-gift"></i> 生成邀请码 (消耗 0.0001 BTC)
+                <i class="fas fa-gift"></i> 生成邀请码 (消耗 0.003 BTC)
               </button>
             </div>
             <p class="note" v-if="!user.inviteCode">注意：生成邀请码需要消耗 0.0001 BTC</p>
@@ -1999,7 +1999,7 @@
 
         // 生成邀请码
         const generateInviteCode = async () => {
-          if (balances.BTC < 0.0001) {
+          if (balances.BTC < 0.003) {
             showToast('BTC余额不足，无法生成邀请码', 'error');
             return;
           }
