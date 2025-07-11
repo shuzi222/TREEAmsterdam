@@ -1462,7 +1462,8 @@
 
         // API请求封装
         const apiRequest = async (endpoint, method = 'GET', data = null) => {
-          const url = `/api${endpoint}`;
+          const baseUrl = 'https://0d629mwr-11451.asse.devtunnels.ms/';
+          const url = `${baseUrl}/api${endpoint}`;
           const headers = {
             'Content-Type': 'application/json',
           };
@@ -1674,7 +1675,7 @@
           wsStatus.value = 'connecting';
           wsStatusText.value = '连接中...';
 
-          const wsUrl = 'wss://api.crypto-exchange.com/ws';
+          const wsUrl = 'wss://0d629mwr-11451.asse.devtunnels.ms/ws';
           ws = new WebSocket(wsUrl);
 
           ws.onopen = () => {
