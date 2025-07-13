@@ -1478,12 +1478,37 @@
           try {
             const response = await fetch(url, config);
             if (!response.ok) {
-              const error = await response.json();
-              throw new Error(error.message || '请求失败');
+              let errorMessage = '请求失败';
+              const errorData = await response.json().catch(() => ({}));
+
+              // 根据 HTTP 状态码提供更具体的错误信息
+              switch (response.status) {
+                case 400:
+                  errorMessage = errorData.message || '请求参数错误';
+                  break;
+                case 401:
+                  errorMessage = errorData.message || '未授权，请检查登录信息';
+                  break;
+                case 403:
+                  errorMessage = errorData.message || '无权限访问';
+                  break;
+                case 404:
+                  errorMessage = errorData.message || '资源未找到';
+                  break;
+                case 429:
+                  errorMessage = errorData.message || '请求过于频繁，请稍后再试';
+                  break;
+                case 500:
+                  errorMessage = errorData.message || '服务器内部错误';
+                  break;
+                default:
+                  errorMessage = errorData.message || `HTTP错误: ${response.status}`;
+              }
+              throw new Error(errorMessage);
             }
             return await response.json();
           } catch (error) {
-            showToast(`API错误: ${error.message}`, 'error');
+            showToast(`错误: ${error.message}`, 'error');
             throw error;
           }
         };
@@ -1762,15 +1787,32 @@
         // 登录功能
         const login = async () => {
           try {
-            if (walletConnected.value) {
-              const provider = new ethers.providers.Web3Provider(window.ethereum);
-              const signer = provider.getSigner();
-              const message = `Crypto Exchange Login: ${Date.now()}`;
-              const signature = await signer.signMessage(message);
-              loginData.walletAddress = walletAddress.value;
-              loginData.signature = signature;
-              loginData.message = message;
+            if (!loginData.username || !loginData.password) {
+              showToast('请输入用户名和密码', 'error');
+              return;
             }
+
+            if (!walletConnected.value) {
+              showToast('请先连接钱包', 'error');
+              return;
+            }
+
+            // 钱包签名验证
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const message = `Crypto Exchange Login: ${Date.now()}`;
+            let signature;
+
+            try {
+              signature = await signer.signMessage(message);
+            } catch (error) {
+              showToast('钱包签名失败: ' + error.message, 'error');
+              return;
+            }
+
+            loginData.walletAddress = walletAddress.value;
+            loginData.signature = signature;
+            loginData.message = message;
 
             const response = await apiRequest('/auth/login', 'POST', loginData);
             localStorage.setItem('jwt', response.token);
@@ -1787,7 +1829,18 @@
             initData();
             showToast('登录成功！', 'success');
           } catch (error) {
-            showToast(error.message || '登录失败', 'error');
+            // 根据错误信息提供更具体的提示
+            let errorMessage = error.message || '登录失败';
+            if (error.message.includes('用户名或密码错误')) {
+              errorMessage = '用户名或密码错误，请检查输入';
+            } else if (error.message.includes('钱包验证失败')) {
+              errorMessage = '钱包验证失败，请确保使用正确的钱包';
+            } else if (error.message.includes('未授权')) {
+              errorMessage = '登录凭证无效，请重新尝试';
+            } else if (error.message.includes('服务器内部错误')) {
+              errorMessage = '服务器错误，请稍后再试';
+            }
+            showToast(errorMessage, 'error');
           }
         };
 
@@ -1798,11 +1851,23 @@
             return;
           }
 
+          if (!registerData.username || !registerData.password || !registerData.inviteCode) {
+            showToast('请填写所有必填字段', 'error');
+            return;
+          }
+
           try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
             const message = `Crypto Exchange Registration: ${Date.now()}`;
-            const signature = await signer.signMessage(message);
+            let signature;
+
+            try {
+              signature = await signer.signMessage(message);
+            } catch (error) {
+              showToast('钱包签名失败: ' + error.message, 'error');
+              return;
+            }
 
             const response = await apiRequest('/auth/register', 'POST', {
               ...registerData,
@@ -1815,7 +1880,18 @@
             loginData.password = registerData.password;
             await login();
           } catch (error) {
-            showToast(`注册失败: ${error.message}`, 'error');
+            // 根据错误信息提供更具体的提示
+            let errorMessage = error.message || '注册失败';
+            if (error.message.includes('用户名已存在')) {
+              errorMessage = '用户名已被使用，请选择其他用户名';
+            } else if (error.message.includes('无效的邀请码')) {
+              errorMessage = '邀请码无效，请检查输入';
+            } else if (error.message.includes('钱包地址已注册')) {
+              errorMessage = '此钱包地址已被注册';
+            } else if (error.message.includes('服务器内部错误')) {
+              errorMessage = '服务器错误，请稍后再试';
+            }
+            showToast(errorMessage, 'error');
           }
         };
 
