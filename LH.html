@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>树教交易所—树约</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    :root {
+      --primary-bg: #0a0a0a;
+      --secondary-bg: #1a1a1a;
+      --accent-green: #4CAF50;
+      --light-green: #A5D6A7;
+      --dark-green: #2E7D32;
+      --text-light: #e0e0e0;
+      --text-gray: #a0a0a0;
+      --border-radius: 8px;
+      --card-shadow: 0 4px 16px rgba(76, 175, 80, 0.1);
+      --success: #2E7D32;
+      --danger: #dc3545;
+      --transition: all 0.2s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--primary-bg);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, var(--accent-green), var(--light-green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 600;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--dark-green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--accent-green);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+    }
+
+    .btn.danger {
+      background: var(--danger);
+    }
+
+    .btn.danger:hover {
+      background: #b02a37;
+    }
+
+    .btn.disabled {
+      background: var(--text-gray);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .account-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--secondary-bg);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid var(--dark-green);
+    }
+
+    .account-status {
+      color: var(--accent-green);
+      font-weight: 500;
+    }
+
+    .panel {
+      background: var(--secondary-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .panel-title h2 {
+      font-size: 1.3rem;
+      color: var(--accent-green);
+    }
+
+    .bot-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .bot-controls select,
+    .bot-controls input[type="checkbox"] {
+      background: var(--secondary-bg);
+      border: 1px solid var(--accent-green);
+      color: var(--text-light);
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .bot-controls select {
+      background: #000;
+      border: 1px solid var(--accent-green);
+      color: var(--text-light);
+      padding: 6px 12px;
+      border-radius: 6px;
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23A5D6A7" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 8px top 50%;
+      padding-right: 30px;
+    }
+
+    .bot-controls select:focus {
+      outline: none;
+      box-shadow: 0 0 4px var(--accent-green);
+    }
+
+    .bot-controls option {
+      background: var(--secondary-bg);
+      color: var(--text-light);
+    }
+
+    .bot-controls input[type="checkbox"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #000;
+      border: 2px solid var(--accent-green);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .bot-controls input[type="checkbox"]:checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: var(--accent-green);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+    }
+
+    .bot-controls label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
+
+    .log-area {
+      width: 100%;
+      height: 180px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--accent-green);
+      border-radius: 12px;
+      padding: 10px;
+      color: var(--text-light);
+      font-family: monospace;
+      font-size: 0.85rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 15px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal-content {
+      background: var(--secondary-bg);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 600px;
+      box-shadow: var(--card-shadow);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h2 {
+      color: var(--accent-green);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+
+    .modal-content input[type="text"],
+    .modal-content input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--accent-green);
+      color: var(--text-light);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .modal-content button {
+      width: 100%;
+      padding: 10px;
+      background: var(--success);
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .modal-content button:hover {
+      background: var(--accent-green);
+    }
+
+    .modal-content button:disabled {
+      background: var(--text-gray);
+      cursor: not-allowed;
+    }
+
+    .symbol-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .symbol-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
+
+    .symbol-item input[type="checkbox"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #000;
+      border: 2px solid var(--accent-green);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .symbol-item input[type="checkbox"]:checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: var(--accent-green);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 30px;
+      border-radius: 6px;
+      color: white;
+      font-size: 0.9rem;
+      z-index: 1001;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .notification.success {
+      background: var(--dark-green);
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .notification.error {
+      background: rgba(255, 87, 87, 0.2);
+      border-left: 4px solid #ff5757;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      display: none;
+    }
+
+    .loading-spinner {
+      border: 4px solid var(--text-gray);
+      border-top: 4px solid var(--accent-green);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    button:focus,
+    input:focus,
+    select:focus {
+      outline: 2px solid var(--accent-green);
+      outline-offset: 2px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* 卡片布局样式 */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 15px;
+      padding: 10px 0;
+    }
+
+    .card {
+      background: var(--secondary-bg);
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      border-radius: var(--border-radius);
+      padding: 15px;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: move;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
+    }
+
+    .card.dragging {
+      opacity: 0.7;
+      transform: scale(0.98);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .card-header h3 {
+      font-size: 1.1rem;
+      color: var(--accent-green);
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .card-checkbox {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #000;
+      border: 2px solid var(--accent-green);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .card-checkbox:checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: var(--accent-green);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+    }
+
+    .card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .card-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-field label {
+      color: var(--text-gray);
+      font-size: 0.8rem;
+    }
+
+    .card-field span,
+    .card-field input {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .card-field input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--accent-green);
+      padding: 5px;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .no-cards {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-gray);
+      font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .card-body {
+        grid-template-columns: 1fr;
+      }
+
+      .header-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .account-info {
+        font-size: 0.75rem;
+      }
+
+      .symbol-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🌳</div>
+        <h1>量化交易</h1>
+      </div>
+      <div class="header-controls">
+        <button class="btn" id="connectBtn"><i class="fas fa-plug"></i> 连接API</button>
+        <button class="btn btn-danger hidden" id="disconnectBtn"><i class="fas fa-power-off"></i> 断开连接</button>
+        <div class="account-info hidden" id="accountInfo">
+          <div>状态：<span class="account-status" id="accountStatus">未连接</span></div>
+          <div>余额：<span id="balanceInfo">0 USDT</span></div>
+          <div>权益：<span id="equityInfo">0 USDT</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="panel trading-panel">
+      <div class="panel-title">
+        <h 2>交易控制</h2>
+      </div>
+      <div class="bot-controls">
+        <span id="botStatus">机器人状态: 未启动</span>
+        <select id="botFrequency">
+          <option value="30000">每30秒</option>
+          <option value="60000">每分钟</option>
+          <option value="300000">每5分钟</option>
+          <option value="900000">每15分钟</option>
+          <option value="3600000">每小时</option>
+        </select>
+        <label><input type="checkbox" id="apiLimitSwitch" checked> 限制API请求（≤5次/秒）</label>
+        <button class="btn" id="botStartBtn">启动机器人</button>
+        <button class="btn btn-danger disabled" id="botStopBtn" disabled>停止机器人</button>
+        <button class="btn" id="exportBtn">导出参数</button>
+        <input type="file" id="importInput" accept=".json" style="display: none;">
+        <button class="btn" id="importBtn">导入参数</button>
+        <button class="btn" id="addSymbolBtn">添加交易对</button>
+        <label><input type="checkbox" id="selectAll"> 全选</label>
+        <button class="btn btn-danger disabled" id="batchDeleteBtn" disabled>批量删除</button>
+      </div>
+      <div class="cards-container" id="cardsContainer">
+        <div class="no-cards">无交易对配置</div>
+      </div>
+      <div class="log-area" id="botLogArea"></div>
+    </div>
+
+    <div class="modal" id="apiModal">
+      <div class="modal-content">
+        <h2>输入OKX API密钥</h2>
+        <input type="text" id="apiKeyInput" placeholder="API Key" autocomplete="off">
+        <input type="text" id="apiSecretInput" placeholder="API Secret" autocomplete="off">
+        <input type="password" id="passphraseInput" placeholder="Passphrase" autocomplete="off">
+        <button id="saveApiBtn">保存并连接</button>
+      </div>
+    </div>
+
+    <div class="modal" id="symbolModal">
+      <div class="modal-content">
+        <h2>选择交易对</h2>
+        <div style="margin-bottom: 10px;">
+          <label>交易类型:</label>
+          <select id="tradeTypeSelect">
+            <option value="SPOT">现货</option>
+            <option value="SWAP">永续合约</option>
+          </select>
+        </div>
+        <div class="symbol-list" id="symbolList"></div>
+        <button id="confirmSymbolsBtn">确认添加</button>
+      </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div id="notification"></div>
+  </div>
+
+  <script>
+    // DOM 元素
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const accountInfo = document.getElementById('accountInfo');
+    const accountStatus = document.getElementById('accountStatus');
+    const balanceInfo = document.getElementById('balanceInfo');
+    const equityInfo = document.getElementById('equityInfo');
+    const addSymbolBtn = document.getElementById('addSymbolBtn');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const botStatus = document.getElementById('botStatus');
+    const botStartBtn = document.getElementById('botStartBtn');
+    const botStopBtn = document.getElementById('botStopBtn');
+    const botFrequency = document.getElementById('botFrequency');
+    const apiLimitSwitch = document.getElementById('apiLimitSwitch');
+    const botLogArea = document.getElementById('botLogArea');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importInput = document.getElementById('importInput');
+    const apiModal = document.getElementById('apiModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiSecretInput = document.getElementById('apiSecretInput');
+    const passphraseInput = document.getElementById('passphraseInput');
+    const saveApiBtn = document.getElementById('saveApiBtn');
+    const symbolModal = document.getElementById('symbolModal');
+    const tradeTypeSelect = document.getElementById('tradeTypeSelect');
+    const symbolList = document.getElementById('symbolList');
+    const confirmSymbolsBtn = document.getElementById('confirmSymbolsBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const selectAll = document.getElementById('selectAll');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+
+    let botRunning = false;
+    let botInterval = null;
+    let symbols = [];
+    let params = {};
+    let state = {};
+    let apiKey = null;
+    let apiSecret = null;
+    let passphrase = null;
+    const OKX_API_URL = 'https://www.okx.com';
+    let requestQueue = [];
+    let lastRequestTime = 0;
+    const REQUEST_LIMIT = 5;
+    const REQUEST_INTERVAL = 1000 / REQUEST_LIMIT;
+    let isAddingSymbols = false;
+
+    const SUPPORTED_COINS = [
+      'BTC', 'ETH', 'XRP', 'BNB', 'SOL', 'DOGE', 'TRX', 'ADA', 'SUI', 'LINK',
+      'BCH', 'AVAX', 'LTC', 'SHIB', 'TON', 'UNI', 'DOT', 'PEPE', 'AAVE', 'ETC',
+      'APT', 'ARB', 'TRUMP', 'MKR', 'FIL', 'OP', 'LDO', 'WIF', 'CFX', 'XAUT'
+    ];
+
+    function showNotification(message, type = 'error') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type} show`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 5000);
+    }
+
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+
+    function log(message) {
+      const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+      const logMessage = `[${timestamp}] ${message}\n`;
+      console.log(logMessage);
+      botLogArea.textContent += logMessage;
+      botLogArea.scrollTop = botLogArea.scrollHeight;
+    }
+
+    function signOkxRequest(method, path, params = {}, timestamp) {
+      const secret = apiSecret;
+      const queryString = params && Object.keys(params).length ? new URLSearchParams(params).toString() : '';
+      const body = method === 'POST' ? JSON.stringify(params) : '';
+      const message = timestamp + method.toUpperCase() + path + (method === 'GET' && queryString ? `?${queryString}` : '') + (method === 'POST' ? body : '');
+      return CryptoJS.HmacSHA256(message, secret).toString(CryptoJS.enc.Base64);
+    }
+
+    async function okxRequest(method, path, params = {}, retries = 3) {
+      if (!apiKey || !apiSecret || !passphrase) {
+        throw new Error('API密钥未配置');
+      }
+      const request = async () => {
+        try {
+          const timestamp = new Date().toISOString();
+          const headers = {
+            'OK-ACCESS-KEY': apiKey,
+            'OK-ACCESS-SIGN': signOkxRequest(method, path, params, timestamp),
+            'OK-ACCESS-TIMESTAMP': timestamp,
+            'OK-ACCESS-PASSPHRASE': passphrase,
+            'Content-Type': 'application/json'
+          };
+          const url = method === 'GET' ? `${OKX_API_URL}${path}?${new URLSearchParams(params)}` : `${OKX_API_URL}${path}`;
+          const response = await axios({
+            method,
+            url,
+            headers,
+            data: method === 'POST' ? params : undefined
+          });
+          if (response.data.code !== '0') {
+            throw new Error(response.data.msg || 'API请求失败');
+          }
+          return response.data.data;
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      if (!apiLimitSwitch.checked) {
+        for (let attempt = 0; attempt < retries; attempt++) {
+          try {
+            return await request();
+          } catch (error) {
+            log(`API请求失败: ${path}, 尝试 ${attempt + 1}/${retries}: ${error.message}`);
+            if (attempt < retries - 1) await new Promise(resolve => setTimeout(resolve, 2000));
+            else throw error;
+          }
+        }
+      } else {
+        return new Promise((resolve, reject) => {
+          requestQueue.push({ request, resolve, reject, retries, attempt: 0, path });
+          processRequestQueue();
+        });
+      }
+    }
+
+    async function processRequestQueue() {
+      if (!apiLimitSwitch.checked || requestQueue.length === 0) return;
+      const now = Date.now();
+      if (now - lastRequestTime < REQUEST_INTERVAL) {
+        setTimeout(processRequestQueue, REQUEST_INTERVAL - (now - lastRequestTime));
+        return;
+      }
+      const { request, resolve, reject, retries, attempt, path } = requestQueue.shift();
+      try {
+        const result = await request();
+        resolve(result);
+        lastRequestTime = Date.now();
+      } catch (error) {
+        log(`API请求失败: ${path}, 尝试 ${attempt + 1}/${retries}: ${error.message}`);
+        if (attempt < retries - 1) {
+          requestQueue.push({ request, resolve, reject, retries, attempt: attempt + 1, path });
+        } else {
+          reject(error);
+        }
+      }
+      if (requestQueue.length > 0) {
+        setTimeout(processRequestQueue, REQUEST_INTERVAL);
+      }
+    }
+
+    async function getPrice(symbol) {
+      try {
+        const data = await okxRequest('GET', '/api/v5/market/ticker', { instId: symbol });
+        const price = parseFloat(data[0].last);
+        state[symbol].current_price = price;
+        log(`获取价格: ${symbol}, $${price.toFixed(2)}`);
+        return price;
+      } catch (error) {
+        log(`获取价格失败: ${symbol}, ${error.message}`);
+        return null;
+      }
+    }
+
+    async function getKlines(symbol, interval, limit = 100) {
+      try {
+        const data = await okxRequest('GET', '/api/v5/market/candles', { instId: symbol, bar: interval, limit });
+        if (!data || data.length === 0) {
+          log(`无K线数据: ${symbol}, ${interval}`);
+          return null;
+        }
+        const klines = data.map(row => ({
+          ts: parseInt(row[0]),
+          open: parseFloat(row[1]),
+          high: parseFloat(row[2]),
+          low: parseFloat(row[3]),
+          close: parseFloat(row[4])
+        })).sort((a, b) => a.ts - b.ts);
+        if (klines.length < 34) {
+          log(`K线数据不足: ${symbol}, ${interval}, ${klines.length}条，需至少34条`);
+          return null;
+        }
+        log(`获取K线数据: ${symbol}, ${interval}, ${klines.length}条`);
+        return klines;
+      } catch (error) {
+        log(`获取K线失败: ${symbol}, ${error.message}`);
+        return null;
+      }
+    }
+
+    function calculateRSI(klines, period = 14) {
+      if (!klines || klines.length < period + 1) {
+        log(`RSI数据不足: ${klines?.length || 0}条`);
+        return null;
+      }
+      const closes = klines.map(k => k.close);
+      const delta = closes.slice(1).map((c, i) => c - closes[i]);
+      const gains = delta.map(d => d > 0 ? d : 0);
+      const losses = delta.map(d => d < 0 ? -d : 0);
+      let avgGain = gains.slice(0, period).reduce((sum, g) => sum + g, 0) / period;
+      let avgLoss = losses.slice(0, period).reduce((sum, l) => sum + l, 0) / period;
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
+      let rsi = 100 - (100 / (1 + rs));
+      for (let i = period; i < closes.length - 1; i++) {
+        avgGain = (avgGain * (period - 1) + gains[i]) / period;
+        avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+        rsi = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+      }
+      if (isNaN(rsi)) {
+        log(`RSI计算结果无效: ${rsi}`);
+        return null;
+      }
+      log(`RSI计算: 周期=${period}, 最新RSI=${rsi.toFixed(2)}`);
+      return rsi;
+    }
+
+    function calculateMACD(klines, fast = 12, slow = 26, signal = 9) {
+      if (!klines || klines.length < slow + signal - 1) {
+        log(`MACD数据不足: ${klines?.length || 0}条，需至少${slow + signal - 1}条`);
+        return [null, null, null];
+      }
+      const closes = klines.map(k => k.close);
+      if (closes.some(c => c <= 0 || isNaN(c))) {
+        log(`K线数据包含无效收盘价`);
+        return [null, null, null];
+      }
+      const ema = (data, span) => {
+        const k = 2 / (span + 1);
+        return data.reduce((acc, val, i) => {
+          if (i === 0) return [val];
+          return [...acc, acc[i - 1] * (1 - k) + val * k];
+        }, []);
+      };
+      const emaFast = ema(closes, fast);
+      const emaSlow = ema(closes, slow);
+      const macd = emaFast.map((f, i) => f - emaSlow[i]);
+      const signalLine = ema(macd.slice(slow - 1), signal);
+      const histogram = macd.slice(slow - 1).map((m, i) => m - signalLine[i]);
+      if (macd.length < 2 || signalLine.length < 2) {
+        log(`MACD输出长度不足: macd=${macd.length}, signal=${signalLine.length}`);
+        return [null, null, null];
+      }
+      log(`MACD计算: MACD=${macd[macd.length - 1].toFixed(2)}, 信号线=${signalLine[signalLine.length - 1].toFixed(2)}, 柱状图=${histogram[histogram.length - 1].toFixed(2)}`);
+      return [macd[macd.length - 1], signalLine[signalLine.length - 1], histogram[histogram.length - 1]];
+    }
+
+    function calculateATR(klines, period = 7) {
+      if (!klines || klines.length < period + 1) {
+        log(`ATR数据不足: ${klines?.length || 0}条，需至少${period + 1}条`);
+        return null;
+      }
+      const tr = klines.slice(1).map((k, i) => {
+        const prev = klines[i];
+        const hl = k.high - k.low;
+        const hc = Math.abs(k.high - prev.close);
+        const lc = Math.abs(k.low - prev.close);
+        return Math.max(hl, hc, lc);
+      });
+      const atr = tr.slice(0, period).reduce((sum, v) => sum + v, 0) / period;
+      if (!atr || isNaN(atr)) {
+        log(`ATR计算结果无效`);
+        return null;
+      }
+      log(`ATR计算: 周期=${period}, 最新ATR=${atr.toFixed(4)}`);
+      return atr;
+    }
+
+    async function getSymbolInfo(symbol, instType) {
+      try {
+        const data = await okxRequest('GET', '/api/v5/public/instruments', { instType, instId: symbol });
+        const info = data[0];
+        const ctVal = instType === 'SWAP' ? parseFloat(info.ctVal || 0.01) : 1;
+        const minQty = parseFloat(info.minSz || 0.01);
+        const tickSz = parseFloat(info.tickSz || 0.01);
+        const lotSz = parseFloat(info.lotSz || minQty);
+        log(`获取交易对信息: ${symbol}, instType=${instType}, ctVal=${ctVal}, minQty=${minQty}, tickSz=${tickSz}, lotSz=${lotSz}`);
+        return { ctVal, minQty, tickSz, lotSz };
+      } catch (error) {
+        log(`获取交易对信息失败: ${symbol}, ${error.message}`);
+        return { ctVal: instType === 'SWAP' ? 0.01 : 1, minQty: 0.01, tickSz: 0.01, lotSz: 0.01 };
+      }
+    }
+
+    async function setLeverage(symbol) {
+      if (!symbol.endsWith('-SWAP')) return;
+      const p = params[symbol];
+      try {
+        await okxRequest('POST', '/api/v5/account/set-leverage', {
+          instId: symbol,
+          lever: p.LEVERAGE.toString(),
+          mgnMode: p.MARGIN_MODE
+        });
+        log(`设置杠杆成功: ${symbol}, 杠杆=${p.LEVERAGE}, 模式=${p.MARGIN_MODE}`);
+      } catch (error) {
+        log(`设置杠杆失败: ${symbol}, ${error.message}`);
+      }
+    }
+
+    async function getBalance(symbol) {
+      try {
+        const balanceData = await okxRequest('GET', '/api/v5/account/balance');
+        const usdt = balanceData[0]?.details?.find(d => d.ccy === 'USDT')?.availEq || '0';
+        const equity = balanceData[0]?.totalEq || '0';
+        const instType = symbol.endsWith('-SWAP') ? 'SWAP' : 'SPOT';
+        const positionsData = instType === 'SWAP' ? await okxRequest('GET', '/api/v5/account/positions', { instType, instId: symbol }) : [];
+        let longQty = 0, shortQty = 0, longAvgPrice = 0, shortAvgPrice = 0;
+        if (instType === 'SWAP') {
+          positionsData.forEach(pos => {
+            if (pos.instId === symbol) {
+              const qty = parseFloat(pos.pos || 0);
+              const avgPrice = parseFloat(pos.avgPx || 0);
+              if (pos.posSide === 'long') {
+                longQty = qty;
+                longAvgPrice = avgPrice;
+              } else if (pos.posSide === 'short') {
+                shortQty = qty;
+                shortAvgPrice = avgPrice;
+              }
+            }
+          });
+        }
+        log(`余额获取成功: ${symbol}, USDT=${parseFloat(usdt).toFixed(2)}, 总权益=${parseFloat(equity).toFixed(2)}`);
+        return {
+          usdt: parseFloat(usdt),
+          equity: parseFloat(equity),
+          longQty,
+          shortQty,
+          longAvgPrice,
+          shortAvgPrice
+        };
+      } catch (error) {
+        log(`获取余额失败: ${symbol}, ${error.message}`);
+        return { usdt: 0, equity: 0, longQty: 0, shortQty: 0, longAvgPrice: 0, shortAvgPrice: 0 };
+      }
+    }
+
+    async function placeOrder(symbol, side, posSide, quantity, atr = null) {
+      const p = params[symbol];
+      const instType = symbol.endsWith('-SWAP') ? 'SWAP' : 'SPOT';
+      try {
+        const { ctVal, minQty, tickSz, lotSz } = await getSymbolInfo(symbol, instType);
+        const quantityAdjusted = instType === 'SWAP' ? Math.max(Math.round(quantity / ctVal / lotSz) * lotSz, minQty) : Math.max(quantity, minQty);
+        if (quantityAdjusted < minQty) {
+          log(`下单失败: ${symbol}, 数量${quantityAdjusted.toFixed(2)}小于最小值${minQty.toFixed(2)}`);
+          return null;
+        }
+        const currentPrice = state[symbol].current_price;
+        let tpPrice, slPrice;
+        if (atr) {
+          tpPrice = currentPrice + (posSide === 'long' ? atr * p.ATR_TP_MULTIPLIER : -atr * p.ATR_TP_MULTIPLIER);
+          slPrice = currentPrice + (posSide === 'long' ? -atr * p.ATR_SL_MULTIPLIER : atr * p.ATR_SL_MULTIPLIER);
+        } else {
+          tpPrice = currentPrice * (posSide === 'long' ? 1 + p.TAKE_PROFIT / 100 : 1 - p.TAKE_PROFIT / 100);
+          slPrice = currentPrice * (posSide === 'long' ? 1 - p.STOP_LOSS / 100 : 1 + p.STOP_LOSS / 100);
+        }
+        tpPrice = Math.round(tpPrice / tickSz) * tickSz;
+        slPrice = Math.round(slPrice / tickSz) * tickSz;
+        const orderParams = {
+          instId: symbol,
+          tdMode: instType === 'SWAP' ? p.MARGIN_MODE : 'cash',
+          side: side.toLowerCase(),
+          ordType: 'market',
+          sz: quantityAdjusted.toString(),
+          clOrdId: crypto.randomUUID().replace(/-/g, '').slice(0, 32)
+        };
+        if (instType === 'SWAP') {
+          orderParams.posSide = posSide.toLowerCase();
+          orderParams.attachAlgoOrds = [{
+            tpTriggerPx: tpPrice.toString(),
+            tpOrdPx: '-1',
+            slTriggerPx: slPrice.toString(),
+            slOrdPx: '-1',
+            tpOrdKind: 'condition',
+            slTriggerPxType: 'last',
+            tpTriggerPxType: 'last'
+          }];
+        }
+        const order = await okxRequest('POST', '/api/v5/trade/order', orderParams);
+        const action = instType === 'SPOT' ? (side === 'buy' ? '买入' : '卖出') : (side === 'buy' && posSide === 'long' ? '开多' : side === 'sell' && posSide === 'short' ? '开空' : '平仓');
+        log(`${symbol} ${action} 订单已下: 数量${quantityAdjusted.toFixed(2)}, 止盈=${tpPrice.toFixed(2)}, 止损=${slPrice.toFixed(2)}`);
+        return order[0].ordId;
+      } catch (error) {
+        log(`下单失败: ${symbol}, ${error.message}`);
+        return null;
+      }
+    }
+
+    function checkTakeProfitStopLoss(symbol, longQty, shortQty, longAvgPrice, shortAvgPrice, currentPrice, rsi, macd, signal, histogram) {
+      if (!symbol.endsWith('-SWAP')) return [null, 0, null];
+      const p = params[symbol];
+      const atr = state[symbol].latest_atr;
+      let posSide = null, qty = 0, reason = null;
+      if (longQty > 0 && longAvgPrice > 0) {
+        const profitDiff = currentPrice - longAvgPrice;
+        if (atr && profitDiff >= atr * p.ATR_TP_MULTIPLIER) {
+          posSide = 'long';
+          qty = longQty;
+          reason = `ATR止盈(${p.ATR_TP_MULTIPLIER}倍)`;
+        } else if (!atr && (profitDiff / longAvgPrice * 100) >= p.TAKE_PROFIT) {
+          posSide = 'long';
+          qty = longQty;
+          reason = '固定止盈';
+        } else if (atr && (longAvgPrice - currentPrice) >= atr * p.ATR_SL_MULTIPLIER) {
+          posSide = 'long';
+          qty = longQty;
+          reason = `ATR止损(${p.ATR_SL_MULTIPLIER}倍)`;
+        } else if (!atr && (profitDiff / longAvgPrice * 100) <= -p.STOP_LOSS) {
+          posSide = 'long';
+          qty = longQty;
+          reason = '固定止损';
+        } else if (rsi >= p.RSI_SELL_VALUE) {
+          posSide = 'long';
+          qty = longQty;
+          reason = `RSI>${p.RSI_SELL_VALUE}`;
+        } else if (macd > 0 && macd < signal && state[symbol].last_macd >= state[symbol].last_signal) {
+          posSide = 'long';
+          qty = longQty;
+          reason = 'MACD死叉';
+        }
+      }
+      if (shortQty > 0 && shortAvgPrice > 0) {
+        const profitDiff = shortAvgPrice - currentPrice;
+        if (atr && profitDiff >= atr * p.ATR_TP_MULTIPLIER) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = `ATR止盈(${p.ATR_TP_MULTIPLIER}倍)`;
+        } else if (!atr && (profitDiff / shortAvgPrice * 100) >= p.TAKE_PROFIT) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = '固定止盈';
+        } else if (atr && (currentPrice - shortAvgPrice) >= atr * p.ATR_SL_MULTIPLIER) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = `ATR止损(${p.ATR_SL_MULTIPLIER}倍)`;
+        } else if (!atr && (profitDiff / shortAvgPrice * 100) <= -p.STOP_LOSS) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = '固定止损';
+        } else if (rsi <= p.RSI_BUY_VALUE) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = `RSI<${p.RSI_BUY_VALUE}`;
+        } else if (macd < 0 && macd > signal && state[symbol].last_macd <= state[symbol].last_signal) {
+          posSide = 'short';
+          qty = shortQty;
+          reason = 'MACD金叉';
+        }
+      }
+      return [posSide, qty, reason];
+    }
+
+    async function executeTradingLogic(symbol) {
+      const p = params[symbol];
+      const isSwap = symbol.endsWith('-SWAP');
+      try {
+        const price = await getPrice(symbol);
+        if (!price) {
+          log(`${symbol} 无法获取价格，跳过`);
+          return false;
+        }
+        const dfRsi = await getKlines(symbol, p.RSI_TIMEFRAME);
+        const dfMacd = await getKlines(symbol, p.MACD_TIMEFRAME);
+        if (!dfRsi || !dfMacd) {
+          log(`${symbol} 无K线数据，跳过`);
+          return false;
+        }
+        const rsi = calculateRSI(dfRsi);
+        if (rsi === null) {
+          log(`${symbol} RSI计算失败，跳过`);
+          return false;
+        }
+        state[symbol].latest_rsi = rsi;
+        const [macd, signal, histogram] = calculateMACD(dfMacd, p.MACD_FAST, p.MACD_SLOW, p.MACD_SIGNAL);
+        if (macd === null || signal === null || histogram === null) {
+          log(`${symbol} MACD计算失败，跳过`);
+          return false;
+        }
+        state[symbol].last_macd = state[symbol].latest_macd;
+        state[symbol].last_signal = state[symbol].latest_signal;
+        state[symbol].latest_macd = macd;
+        state[symbol].latest_signal = signal;
+        state[symbol].latest_histogram = histogram;
+        const atr = calculateATR(dfRsi, p.ATR_PERIOD);
+        state[symbol].latest_atr = atr;
+        let dynamicBuyRatio = p.BUY_RATIO;
+        if (atr) {
+          const diff = atr - p.ATR_TARGET;
+          const volatilityFactor = Math.exp((diff * 100) ** 2 / (2 * (p.ATR_BASE * 100) ** 2));
+          dynamicBuyRatio = p.BUY_RATIO * Math.max(0.5, Math.min(1.5, volatilityFactor * 1.5));
+          dynamicBuyRatio = Math.max(p.BUY_RATIO_MIN, Math.min(p.BUY_RATIO_MAX, dynamicBuyRatio));
+          log(`${symbol} 动态仓位比例: ATR=${atr.toFixed(4)}, volatilityFactor=${volatilityFactor.toFixed(2)}, dynamicBuyRatio=${dynamicBuyRatio.toFixed(2)}`);
+        } else {
+          log(`${symbol} ATR计算失败，使用默认仓位比例${p.BUY_RATIO}`);
+        }
+        const { usdt, equity, longQty, shortQty, longAvgPrice, shortAvgPrice } = await getBalance(symbol);
+        balanceInfo.textContent = `${usdt.toFixed(2)} USDT`;
+        equityInfo.textContent = `${equity.toFixed(2)} USDT`;
+        log(`${symbol} 账户状态: USDT=${usdt.toFixed(2)}, 总权益=${equity.toFixed(2)}, 多仓=${longQty.toFixed(2)}, 空仓=${shortQty.toFixed(2)}`);
+        if (usdt <= 0 && equity <= 0) {
+          log(`${symbol} 账户资金无效: USDT=${usdt.toFixed(2)}, 总权益=${equity.toFixed(2)}`);
+          return false;
+        }
+        updateCardData(symbol, { price, rsi, macd, atr, longQty, shortQty });
+        if (isSwap) {
+          const [posSide, qty, reason] = checkTakeProfitStopLoss(symbol, longQty, shortQty, longAvgPrice, shortAvgPrice, price, rsi, macd, signal, histogram);
+          if (posSide && qty > 0) {
+            const order = await placeOrder(symbol, posSide === 'long' ? 'sell' : 'buy', posSide, qty, atr);
+            if (order) {
+              log(`${symbol} 平仓: ${reason}, 数量=${qty.toFixed(2)}`);
+              const updatedBalance = await getBalance(symbol);
+              balanceInfo.textContent = `${updatedBalance.usdt.toFixed(2)} USDT`;
+              equityInfo.textContent = `${updatedBalance.equity.toFixed(2)} USDT`;
+              updateCardData(symbol, { longQty: updatedBalance.longQty, shortQty: updatedBalance.shortQty });
+            }
+            return true;
+          }
+        }
+        const hasPosition = isSwap ? (longQty > 0 || shortQty > 0) : false;
+        if (!hasPosition) {
+          const { ctVal, minQty, lotSz } = await getSymbolInfo(symbol, isSwap ? 'SWAP' : 'SPOT');
+          const minQuantity = minQty * (isSwap ? ctVal : 1);
+          const maxQuantity = (equity * dynamicBuyRatio) / price * (isSwap ? p.LEVERAGE : 1);
+          const quantity = Math.min((usdt * dynamicBuyRatio) / price * (isSwap ? p.LEVERAGE : 1), maxQuantity);
+          if (quantity < minQuantity) {
+            log(`${symbol} 未开仓: 数量${quantity.toFixed(6)}小于最小单位${minQuantity.toFixed(6)}`);
+            return false;
+          }
+          if (rsi <= p.RSI_BUY_VALUE) {
+            const order = await placeOrder(symbol, 'buy', isSwap ? 'long' : null, quantity, atr);
+            if (order) {
+              log(`${symbol} RSI ${isSwap ? '开多' : '买入'}: 数量=${(isSwap ? quantity / ctVal : quantity).toFixed(2)}`);
+              const updatedBalance = await getBalance(symbol);
+              updateCardData(symbol, { longQty: updatedBalance.longQty, shortQty: updatedBalance.shortQty });
+            }
+            return true;
+          } else if (rsi >= p.RSI_SELL_VALUE && isSwap) {
+            const order = await placeOrder(symbol, 'sell', 'short', quantity, atr);
+            if (order) {
+              log(`${symbol} RSI 开空: 数量=${(quantity / ctVal).toFixed(2)}`);
+              const updatedBalance = await getBalance(symbol);
+              updateCardData(symbol, { longQty: updatedBalance.longQty, shortQty: updatedBalance.shortQty });
+            }
+            return true;
+          } else if (macd < 0 && macd > signal && state[symbol].last_macd <= state[symbol].last_signal && histogram > 0) {
+            log(`${symbol} MACD检测到负区金叉`);
+            const order = await placeOrder(symbol, 'buy', isSwap ? 'long' : null, quantity, atr);
+            if (order) {
+              log(`${symbol} MACD ${isSwap ? '开多' : '买入'}: 数量=${(isSwap ? quantity / ctVal : quantity).toFixed(2)}`);
+              const updatedBalance = await getBalance(symbol);
+              updateCardData(symbol, { longQty: updatedBalance.longQty, shortQty: updatedBalance.shortQty });
+            }
+            return true;
+          } else if (isSwap && macd > 0 && macd < signal && state[symbol].last_macd >= state[symbol].last_signal && histogram < 0) {
+            log(`${symbol} MACD检测到正区死叉`);
+            const order = await placeOrder(symbol, 'sell', 'short', quantity, atr);
+            if (order) {
+              log(`${symbol} MACD 开空: 数量=${(quantity / ctVal).toFixed(2)}`);
+              const updatedBalance = await getBalance(symbol);
+              updateCardData(symbol, { longQty: updatedBalance.longQty, shortQty: updatedBalance.shortQty });
+            }
+            return true;
+          } else {
+            log(`${symbol} 未开新仓: 无交易信号`);
+          }
+        } else {
+          log(`${symbol} 未开新仓: 当前持仓 多仓=${longQty.toFixed(2)}, 空仓=${shortQty.toFixed(2)}`);
+        }
+        return true;
+      } catch (error) {
+        log(`交易逻辑失败: ${symbol}, ${error.message}`);
+        return false;
+      }
+    }
+
+    async function tradingCycle() {
+      if (!botRunning) return;
+      log('开始交易周期');
+      const uniqueSymbols = [...new Set(symbols)];
+      if (uniqueSymbols.length !== symbols.length) {
+        log(`检测到重复交易对，已自动去重: ${symbols.length} -> ${uniqueSymbols.length}`);
+        symbols = uniqueSymbols;
+        await updateCards();
+      }
+      for (const symbol of symbols) {
+        log(`处理交易对: ${symbol}`);
+        let success = await executeTradingLogic(symbol);
+        if (!success) {
+          log(`${symbol} 首次交易逻辑失败，尝试重新执行`);
+          success = await executeTradingLogic(symbol);
+          if (!success) log(`${symbol} 第二次交易逻辑失败，跳过本次交易`);
+        }
+      }
+    }
+
+    function addSymbol(symbol) {
+      if (symbols.includes(symbol)) {
+        showNotification(`交易对 ${symbol} 已存在`, 'error');
+        log(`尝试添加重复交易对: ${symbol}`);
+        return false;
+      }
+      symbols.push(symbol);
+      params[symbol] = {
+        RSI_TIMEFRAME: '1H',
+        RSI_BUY_VALUE: 30,
+        RSI_SELL_VALUE: 70,
+        MACD_TIMEFRAME: '1H',
+        MACD_FAST: 12,
+        MACD_SLOW: 26,
+        MACD_SIGNAL: 9,
+        ATR_PERIOD: 7,
+        ATR_TARGET: 0.01,
+        ATR_BASE: 0.005,
+        ATR_TP_MULTIPLIER: 2,
+        ATR_SL_MULTIPLIER: 1.5,
+        LEVERAGE: symbol.endsWith('-SWAP') ? 10 : 0,
+        BUY_RATIO: 0.1,
+        BUY_RATIO_MIN: 0.05,
+        BUY_RATIO_MAX: 0.2,
+        MARGIN_MODE: symbol.endsWith('-SWAP') ? 'cross' : 'cash',
+        TAKE_PROFIT: 5,
+        STOP_LOSS: 3
+      };
+      state[symbol] = {
+        current_price: 0,
+        latest_rsi: null,
+        latest_macd: null,
+        latest_signal: null,
+        latest_histogram: null,
+        last_macd: null,
+        last_signal: null,
+        latest_atr: null
+      };
+      if (symbol.endsWith('-SWAP')) setLeverage(symbol);
+      log(`添加交易对: ${symbol}`);
+      addCard(symbol);
+      return true;
+    }
+
+    function addCard(symbol) {
+      const isSwap = symbol.endsWith('-SWAP');
+      const p = params[symbol];
+      const s = state[symbol];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.symbol = symbol;
+      card.innerHTML = `
+ <input type="checkbox" class="card-checkbox" data-symbol="${symbol}">
+ <div class="card-header">
+ <h3>${symbol}</h3>
+ <div class="card-actions">
+ <button class="btn btn-danger settle-btn" data-symbol="${symbol}"><i class="fas fa-trash"></i></button>
+ </div>
+ </div>
+ <div class="card-body">
+ <div class="card-field">
+ <label>当前价格</label>
+ <span id="${symbol}-price">$${s.current_price ? s.current_price.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>RSI</label>
+ <span id="${symbol}-rsi">${s.latest_rsi ? s.latest_rsi.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>MACD</label>
+ <span id="${symbol}-macd">${s.latest_macd ? s.latest_macd.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>ATR</label>
+ <span id="${symbol}-atr">${s.latest_atr ? s.latest_atr.toFixed(4) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>多仓</label>
+ <span id="${symbol}-long">${isSwap ? '0.00' : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>空仓</label>
+ <span id="${symbol}-short">${isSwap ? '0.00' : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>RSI周期</label>
+ <input type="text" value="${p.RSI_TIMEFRAME}" data-symbol="${symbol}" data-key="RSI_TIMEFRAME">
+ </div>
+ <div class="card-field">
+ <label>RSI买入</label>
+ <input type="number" value="${p.RSI_BUY_VALUE}" data-symbol="${symbol}" data-key="RSI_BUY_VALUE">
+ </div>
+ <div class="card-field">
+ <label>RSI卖出</label>
+ <input type="number" value="${p.RSI_SELL_VALUE}" data-symbol="${symbol}" data-key="RSI_SELL_VALUE">
+ </div>
+ <div class="card-field">
+ <label>MACD周期</label>
+ <input type="text" value="${p.MACD_TIMEFRAME}" data-symbol="${symbol}" data-key="MACD_TIMEFRAME">
+ </div>
+ <div class="card-field">
+ <label>ATR周期</label>
+ <input type="number" value="${p.ATR_PERIOD}" data-symbol="${symbol}" data-key="ATR_PERIOD">
+ </div>
+ <div class="card-field">
+ <label>杠杆</label>
+ <input type="number" value="${p.LEVERAGE}" data-symbol="${symbol}" data-key="LEVERAGE" ${!isSwap ? 'disabled' : ''}>
+ </div>
+ <div class="card-field">
+ <label>仓位比例</label>
+ <input type="number" step="0.01" value="${p.BUY_RATIO}" data-symbol="${symbol}" data-key="BUY_RATIO">
+ </div>
+ <div class="card-field">
+ <label>止盈%</label>
+ <input type="number" step="0.1" value="${p.TAKE_PROFIT}" data-symbol="${symbol}" data-key="TAKE_PROFIT">
+ </div>
+ <div class="card-field">
+ <label>止损%</label>
+ <input type="number" step="0.1" value="${p.STOP_LOSS}" data-symbol="${symbol}" data-key="STOP_LOSS">
+ </div>
+ </div>
+ `;
+      cardsContainer.appendChild(card);
+      cardsContainer.querySelector('.no-cards')?.remove();
+      bindCardEvents(card);
+      updateBatchDeleteButton();
+    }
+
+    function updateCardData(symbol, data) {
+      const card = cardsContainer.querySelector(`.card[data-symbol="${symbol}"]`);
+      if (!card) return;
+      if (data.price !== undefined) {
+        card.querySelector(`#${symbol}-price`).textContent = `$${data.price ? data.price.toFixed(2) : '-'}`;
+      }
+      if (data.rsi !== undefined) {
+        card.querySelector(`#${symbol}-rsi`).textContent = data.rsi ? data.rsi.toFixed(2) : '-';
+      }
+      if (data.macd !== undefined) {
+        card.querySelector(`#${symbol}-macd`).textContent = data.macd ? data.macd.toFixed(2) : '-';
+      }
+      if (data.atr !== undefined) {
+        card.querySelector(`#${symbol}-atr`).textContent = data.atr ? data.atr.toFixed(4) : '-';
+      }
+      if (data.longQty !== undefined) {
+        card.querySelector(`#${symbol}-long`).textContent = symbol.endsWith('-SWAP') ? data.longQty.toFixed(2) : '-';
+      }
+      if (data.shortQty !== undefined) {
+        card.querySelector(`#${symbol}-short`).textContent = symbol.endsWith('-SWAP') ? data.shortQty.toFixed(2) : '-';
+      }
+    }
+
+    function bindCardEvents(card) {
+      const symbol = card.dataset.symbol;
+      card.querySelector('.settle-btn').addEventListener('click', () => {
+        symbols = symbols.filter(s => s !== symbol);
+        delete params[symbol];
+        delete state[symbol];
+        card.remove();
+        log(`删除交易对: ${symbol}`);
+        if (symbols.length === 0) {
+          cardsContainer.innerHTML = '<div class="no-cards">无交易对配置</div>';
+        }
+        updateBatchDeleteButton();
+      });
+      card.querySelectorAll('input[data-key]').forEach(input => {
+        input.addEventListener('change', () => {
+          const key = input.dataset.key;
+          params[symbol][key] = input.type === 'number' ? parseFloat(input.value) : input.value;
+          if (key === 'LEVERAGE' || key === 'MARGIN_MODE') setLeverage(symbol);
+        });
+      });
+      card.querySelector('.card-checkbox').addEventListener('change', updateBatchDeleteButton);
+    }
+
+    async function updateCards() {
+      cardsContainer.innerHTML = '';
+      if (symbols.length === 0) {
+        cardsContainer.innerHTML = '<div class="no-cards">无交易对配置</div>';
+        updateBatchDeleteButton();
+        return;
+      }
+      for (const symbol of symbols) {
+        addCard(symbol);
+        const { longQty, shortQty } = await getBalance(symbol);
+        updateCardData(symbol, { longQty, shortQty });
+      }
+      initSortable();
+    }
+
+    function initSortable() {
+      Sortable.create(cardsContainer, {
+        animation: 150,
+        handle: '.card',
+        onStart: function (evt) {
+          evt.item.classList.add('dragging');
+        },
+        onEnd: function (evt) {
+          evt.item.classList.remove('dragging');
+          const newOrder = Array.from(cardsContainer.querySelectorAll('.card')).map(card => card.dataset.symbol);
+          symbols = newOrder;
+          log(`交易对顺序已更新: ${symbols.join(', ')}`);
+        }
+      });
+    }
+
+    function updateBatchDeleteButton() {
+      const checkedCount = cardsContainer.querySelectorAll('.card-checkbox:checked').length;
+      batchDeleteBtn.disabled = checkedCount === 0;
+      batchDeleteBtn.classList.toggle('disabled', checkedCount === 0);
+      selectAll.checked = checkedCount > 0 && checkedCount === symbols.length;
+    }
+
+    function batchDelete() {
+      const checkedSymbols = Array.from(cardsContainer.querySelectorAll('.card-checkbox:checked')).map(cb => cb.dataset.symbol);
+      if (checkedSymbols.length === 0) return;
+      symbols = symbols.filter(s => !checkedSymbols.includes(s));
+      checkedSymbols.forEach(symbol => {
+        delete params[symbol];
+        delete state[symbol];
+        cardsContainer.querySelector(`.card[data-symbol="${symbol}"]`).remove();
+      });
+      log(`批量删除交易对: ${checkedSymbols.join(', ')}`);
+      if (symbols.length === 0) {
+        cardsContainer.innerHTML = '<div class="no-cards">无交易对配置</div>';
+      }
+      updateBatchDeleteButton();
+      showNotification(`已删除 ${checkedSymbols.length} 个交易对`, 'success');
+    }
+
+    function showApiModal() {
+      apiModal.style.display = 'flex';
+    }
+
+    async function connectAPI() {
+      showLoading();
+      try {
+        const response = await okxRequest('GET', '/api/v5/account/balance');
+        accountStatus.textContent = '已连接';
+        accountInfo.classList.remove('hidden');
+        connectBtn.classList.add('hidden');
+        disconnectBtn.classList.remove('hidden');
+        const balance = response[0]?.details?.find(d => d.ccy === 'USDT')?.availEq || '0';
+        const equity = response[0]?.totalEq || '0';
+        balanceInfo.textContent = `${parseFloat(balance).toFixed(2)} USDT`;
+        equityInfo.textContent = `${parseFloat(equity).toFixed(2)} USDT`;
+        showNotification('API连接成功', 'success');
+      } catch (error) {
+        showNotification(`API连接失败: ${error.message}`, 'error');
+      } finally {
+        hideLoading();
+        apiModal.style.display = 'none';
+      }
+    }
+
+    function disconnectAPI() {
+      apiKey = null;
+      apiSecret = null;
+      passphrase = null;
+      localStorage.removeItem('okx_api');
+      accountStatus.textContent = '未连接';
+      accountInfo.classList.add('hidden');
+      connectBtn.classList.remove('hidden');
+      disconnectBtn.classList.add('hidden');
+      botRunning = false;
+      botStatus.textContent = '机器人状态: 已停止';
+      botStartBtn.classList.remove('disabled');
+      botStartBtn.disabled = false;
+      botStopBtn.classList.add('disabled');
+      botStopBtn.disabled = true;
+      clearInterval(botInterval);
+      cardsContainer.innerHTML = '<div class="no-cards">无交易对配置</div>';
+      botLogArea.textContent = '';
+      showNotification('API已断开', 'success');
+    }
+
+    function showSymbolModal() {
+      symbolList.innerHTML = '';
+      SUPPORTED_COINS.forEach(coin => {
+        const item = document.createElement('div');
+        item.className = 'symbol-item ';
+        item.innerHTML = `
+ <input type="checkbox" id="coin-${coin}" value="${coin}">
+ <label for="coin-${coin}">${coin}</label>
+ `;
+        symbolList.appendChild(item);
+      });
+      symbolModal.style.display = 'flex';
+      confirmSymbolsBtn.disabled = false;
+    }
+
+    async function confirmAddSymbols() {
+      if (isAddingSymbols) return;
+      isAddingSymbols = true;
+      confirmSymbolsBtn.disabled = true;
+      showLoading();
+      try {
+        const tradeType = tradeTypeSelect.value;
+        const suffix = tradeType === 'SWAP' ? '-SWAP' : '';
+        const selectedCoins = Array.from(symbolList.querySelectorAll('input:checked')).map(input => `${input.value}-USDT${suffix}`);
+        if (selectedCoins.length === 0) {
+          showNotification('请至少选择一个币种', 'error');
+          return;
+        }
+        let addedCount = 0;
+        for (const symbol of selectedCoins) {
+          if (addSymbol(symbol)) addedCount++;
+        }
+        symbolList.querySelectorAll('input:checked').forEach(input => {
+          input.checked = false;
+        });
+        symbolModal.style.display = 'none';
+        updateBatchDeleteButton();
+        showNotification(`成功添加 ${addedCount} 个交易对`, 'success');
+      } catch (error) {
+        showNotification(`添加交易对失败: ${error.message}`, 'error');
+        log(`添加交易对失败: ${error.message}`);
+      } finally {
+        isAddingSymbols = false;
+        confirmSymbolsBtn.disabled = false;
+        hideLoading();
+      }
+    }
+
+    function exportParams() {
+      const includeApi = confirm('是否将OKX API信息包含在导出文件中？');
+      const data = {
+        symbols,
+        params
+      };
+      if (includeApi && apiKey && apiSecret && passphrase) {
+        data.api = { apiKey, apiSecret, passphrase };
+      }
+      const dataStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'trading_config.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('配置导出成功', 'success');
+    }
+
+    async function importParams(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.symbols || !data.params) {
+            throw new Error('导入文件缺少 symbols 或 params 字段');
+          }
+          const requiredKeys = [
+            'RSI_TIMEFRAME', 'RSI_BUY_VALUE', 'RSI_SELL_VALUE', 'MACD_TIMEFRAME', 'MACD_FAST', 'MACD_SLOW', 'MACD_SIGNAL',
+            'ATR_PERIOD', 'ATR_TARGET', 'ATR_BASE', 'ATR_TP_MULTIPLIER', 'ATR_SL_MULTIPLIER', 'LEVERAGE', 'BUY_RATIO',
+            'BUY_RATIO_MIN', 'BUY_RATIO_MAX', 'MARGIN_MODE', 'TAKE_PROFIT', 'STOP_LOSS'
+          ];
+          for (const symbol of data.symbols) {
+            if (!data.params[symbol]) {
+              throw new Error(`缺少 ${symbol} 的参数`);
+            }
+            for (const key of requiredKeys) {
+              if (!(key in data.params[symbol])) {
+                throw new Error(`缺少 ${symbol} 的参数 ${key}`);
+              }
+            }
+            if (!['cross', 'isolated', 'cash'].includes(data.params[symbol].MARGIN_MODE)) {
+              throw new Error(`${symbol} 的 MARGIN_MODE 必须是 'cross', 'isolated' 或 'cash'`);
+            }
+          }
+          symbols = [...new Set(data.symbols)];
+          params = data.params;
+          symbols.forEach(s => {
+            state[s] = {
+              current_price: 0,
+              latest_rsi: null,
+              latest_macd: null,
+              latest_signal: null,
+              latest_histogram: null,
+              last_macd: null,
+              last_signal: null,
+              latest_atr: null
+            };
+            if (s.endsWith('-SWAP')) setLeverage(s);
+          });
+          if (data.api && data.api.apiKey && data.api.apiSecret && data.api.passphrase) {
+            apiKey = data.api.apiKey;
+            apiSecret = data.api.apiSecret;
+            passphrase = data.api.passphrase;
+            localStorage.setItem('okx_api', btoa(JSON.stringify({ apiKey, apiSecret, passphrase })));
+            await connectAPI();
+          }
+          await updateCards();
+          showNotification('配置导入成功', 'success');
+        } catch (error) {
+          showNotification(`配置导入失败: ${error.message}`, 'error');
+          log(`配置导入失败: ${error.message}`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function startBot() {
+      if (botRunning || !apiKey) return;
+      botRunning = true;
+      botStatus.textContent = '机器人状态: 运行中';
+      botStartBtn.classList.add('disabled');
+      botStartBtn.disabled = true;
+      botStopBtn.classList.remove('disabled');
+      botStopBtn.disabled = false;
+      log('机器人启动...');
+      botInterval = setInterval(tradingCycle, parseInt(botFrequency.value));
+    }
+
+    function stopBot() {
+      if (!botRunning) return;
+      botRunning = false;
+      botStatus.textContent = '机器人状态: 已停止';
+      botStartBtn.classList.remove('disabled');
+      botStartBtn.disabled = false;
+      botStopBtn.classList.add('disabled');
+      botStopBtn.disabled = true;
+      clearInterval(botInterval);
+      log('机器人已停止');
+    }
+
+    function init() {
+      const savedApi = localStorage.getItem('okx_api');
+      if (savedApi) {
+        const { apiKey: savedKey, apiSecret: savedSec, passphrase: savedPass } = JSON.parse(atob(savedApi));
+        apiKey = savedKey;
+        apiSecret = savedSec;
+        passphrase = savedPass;
+        connectAPI();
+      }
+
+      connectBtn.addEventListener('click', showApiModal);
+      saveApiBtn.addEventListener('click', () => {
+        apiKey = apiKeyInput.value;
+        apiSecret = apiSecretInput.value;
+        passphrase = passphraseInput.value;
+        localStorage.setItem('okx_api', btoa(JSON.stringify({ apiKey, apiSecret, passphrase })));
+        connectAPI();
+      });
+      disconnectBtn.addEventListener('click', disconnectAPI);
+      addSymbolBtn.addEventListener('click', showSymbolModal);
+      confirmSymbolsBtn.addEventListener('click', confirmAddSymbols);
+      exportBtn.addEventListener('click', exportParams);
+      importBtn.addEventListener('click', () => importInput.click());
+      importInput.addEventListener('change', importParams);
+      botStartBtn.addEventListener('click', startBot);
+      botStopBtn.addEventListener('click', stopBot);
+      selectAll.addEventListener('change', () => {
+        cardsContainer.querySelectorAll('.card-checkbox').forEach(cb => {
+          cb.checked = selectAll.checked;
+        });
+        updateBatchDeleteButton();
+      });
+      batchDeleteBtn.addEventListener('click', batchDelete);
+      initSortable();
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+
+</html>
