@@ -594,7 +594,7 @@
   <div class="container">
     <header>
       <div class="logo">
-        <div class="logo-icon">🌳</div>
+        <div class="logo-icon"></div>
         <h1>树约</h1>
       </div>
       <div class="header-controls">
@@ -722,7 +722,6 @@
         </div>
       </div>
     </div>
-
     <div class="loading-overlay" id="loadingOverlay">
       <div class="loading-spinner"></div>
     </div>
@@ -761,9 +760,9 @@
     const loadingOverlay = document.getElementById('loadingOverlay');
     const selectAll = document.getElementById('selectAll');
     const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
     const closeHelpBtn = document.getElementById('closeHelpBtn');
+
 
     let botRunning = false;
     let botInterval = null;
@@ -1230,9 +1229,9 @@
         state[symbol].latest_atr = atr;
         let dynamicBuyRatio = p.BUY_RATIO;
         if (atr) {
-          const diff = Math.min(atr - p.ATR_TARGET, 0.1); // 限制diff避免溢出
-          const volatilityFactor = 1 + diff / p.ATR_BASE; // 简化公式
-          dynamicBuyRatio = p.BUY_RATIO * Math.max(0.5, Math.min(1.5, volatilityFactor));
+          const diff = atr - p.ATR_TARGET;
+          const volatilityFactor = Math.exp((diff * 100) ** 2 / (2 * (p.ATR_BASE * 100) ** 2));
+          dynamicBuyRatio = p.BUY_RATIO * Math.max(0.5, Math.min(1.5, volatilityFactor * 1.5));
           dynamicBuyRatio = Math.max(p.BUY_RATIO_MIN, Math.min(p.BUY_RATIO_MAX, dynamicBuyRatio));
           log(`${symbol} 动态仓位比例: ATR=${atr.toFixed(4)}, volatilityFactor=${volatilityFactor.toFixed(2)}, dynamicBuyRatio=${dynamicBuyRatio.toFixed(2)}`);
         } else {
@@ -1243,7 +1242,6 @@
         equityInfo.textContent = `${equity.toFixed(2)} USDT`;
         log(`${symbol} 账户状态: USDT=${usdt.toFixed(2)}, 总权益=${equity.toFixed(2)}, 多仓=${longQty.toFixed(2)}, 空仓=${shortQty.toFixed(2)}`);
         if (usdt <= 0 && equity <= 0) {
-          showNotification(`账户余额不足: USDT=${usdt.toFixed(2)}`, 'error');
           log(`${symbol} 账户资金无效: USDT=${usdt.toFixed(2)}, 总权益=${equity.toFixed(2)}`);
           return false;
         }
@@ -1269,8 +1267,7 @@
           const maxQuantity = (equity * dynamicBuyRatio) / price * (isSwap ? p.LEVERAGE : 1);
           const quantity = Math.min((usdt * dynamicBuyRatio) / price * (isSwap ? p.LEVERAGE : 1), maxQuantity);
           if (quantity < minQuantity) {
-            showNotification(`${symbol} 无法开仓: 余额不足，计算数量${quantity.toFixed(6)}小于最小单位${minQuantity.toFixed(6)}`, 'error');
-            log(`${symbol} 未开仓: 余额不足，计算数量${quantity.toFixed(6)}小于最小单位${minQuantity.toFixed(6)}`);
+            log(`${symbol} 未开仓: 数量${quantity.toFixed(6)}小于最小单位${minQuantity.toFixed(6)}`);
             return false;
           }
           if (rsi <= p.RSI_BUY_VALUE) {
@@ -1392,76 +1389,76 @@
       card.className = 'card';
       card.dataset.symbol = symbol;
       card.innerHTML = `
-        <input type="checkbox" class="card-checkbox" data-symbol="${symbol}">
-        <div class="card-header">
-          <h3>${symbol}</h3>
-          <div class="card-actions">
-            <button class="btn btn-danger settle-btn" data-symbol="${symbol}"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-field">
-            <label>当前价格</label>
-            <span id="${symbol}-price">$${s.current_price ? s.current_price.toFixed(2) : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>RSI</label>
-            <span id="${symbol}-rsi">${s.latest_rsi ? s.latest_rsi.toFixed(2) : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>MACD</label>
-            <span id="${symbol}-macd">${s.latest_macd ? s.latest_macd.toFixed(2) : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>ATR</label>
-            <span id="${symbol}-atr">${s.latest_atr ? s.latest_atr.toFixed(4) : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>多仓</label>
-            <span id="${symbol}-long">${isSwap ? '0.00' : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>空仓</label>
-            <span id="${symbol}-short">${isSwap ? '0.00' : '-'}</span>
-          </div>
-          <div class="card-field">
-            <label>RSI周期</label>
-            <input type="text" value="${p.RSI_TIMEFRAME}" data-symbol="${symbol}" data-key="RSI_TIMEFRAME">
-          </div>
-          <div class="card-field">
-            <label>RSI买入</label>
-            <input type="number" value="${p.RSI_BUY_VALUE}" data-symbol="${symbol}" data-key="RSI_BUY_VALUE">
-          </div>
-          <div class="card-field">
-            <label>RSI卖出</label>
-            <input type="number" value="${p.RSI_SELL_VALUE}" data-symbol="${symbol}" data-key="RSI_SELL_VALUE">
-          </div>
-          <div class="card-field">
-            <label>MACD周期</label>
-            <input type="text" value="${p.MACD_TIMEFRAME}" data-symbol="${symbol}" data-key="MACD_TIMEFRAME">
-          </div>
-          <div class="card-field">
-            <label>ATR周期</label>
-            <input type="number" value="${p.ATR_PERIOD}" data-symbol="${symbol}" data-key="ATR_PERIOD">
-          </div>
-          <div class="card-field">
-            <label>杠杆</label>
-            <input type="number" value="${p.LEVERAGE}" data-symbol="${symbol}" data-key="LEVERAGE" ${!isSwap ? 'disabled' : ''}>
-          </div>
-          <div class="card-field">
-            <label>仓位比例</label>
-            <input type="number" step="0.01" value="${p.BUY_RATIO}" data-symbol="${symbol}" data-key="BUY_RATIO">
-          </div>
-          <div class="card-field">
-            <label>止盈%</label>
-            <input type="number" step="0.1" value="${p.TAKE_PROFIT}" data-symbol="${symbol}" data-key="TAKE_PROFIT">
-          </div>
-          <div class="card-field">
-            <label>止损%</label>
-            <input type="number" step="0.1" value="${p.STOP_LOSS}" data-symbol="${symbol}" data-key="STOP_LOSS">
-          </div>
-        </div>
-      `;
+ <input type="checkbox" class="card-checkbox" data-symbol="${symbol}">
+ <div class="card-header">
+ <h3>${symbol}</h3>
+ <div class="card-actions">
+ <button class="btn btn-danger settle-btn" data-symbol="${symbol}"><i class="fas fa-trash"></i></button>
+ </div>
+ </div>
+ <div class="card-body">
+ <div class="card-field">
+ <label>当前价格</label>
+ <span id="${symbol}-price">$${s.current_price ? s.current_price.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>RSI</label>
+ <span id="${symbol}-rsi">${s.latest_rsi ? s.latest_rsi.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>MACD</label>
+ <span id="${symbol}-macd">${s.latest_macd ? s.latest_macd.toFixed(2) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>ATR</label>
+ <span id="${symbol}-atr">${s.latest_atr ? s.latest_atr.toFixed(4) : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>多仓</label>
+ <span id="${symbol}-long">${isSwap ? '0.00' : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>空仓</label>
+ <span id="${symbol}-short">${isSwap ? '0.00' : '-'}</span>
+ </div>
+ <div class="card-field">
+ <label>RSI周期</label>
+ <input type="text" value="${p.RSI_TIMEFRAME}" data-symbol="${symbol}" data-key="RSI_TIMEFRAME">
+ </div>
+ <div class="card-field">
+ <label>RSI买入</label>
+ <input type="number" value="${p.RSI_BUY_VALUE}" data-symbol="${symbol}" data-key="RSI_BUY_VALUE">
+ </div>
+ <div class="card-field">
+ <label>RSI卖出</label>
+ <input type="number" value="${p.RSI_SELL_VALUE}" data-symbol="${symbol}" data-key="RSI_SELL_VALUE">
+ </div>
+ <div class="card-field">
+ <label>MACD周期</label>
+ <input type="text" value="${p.MACD_TIMEFRAME}" data-symbol="${symbol}" data-key="MACD_TIMEFRAME">
+ </div>
+ <div class="card-field">
+ <label>ATR周期</label>
+ <input type="number" value="${p.ATR_PERIOD}" data-symbol="${symbol}" data-key="ATR_PERIOD">
+ </div>
+ <div class="card-field">
+ <label>杠杆</label>
+ <input type="number" value="${p.LEVERAGE}" data-symbol="${symbol}" data-key="LEVERAGE" ${!isSwap ? 'disabled' : ''}>
+ </div>
+ <div class="card-field">
+ <label>仓位比例</label>
+ <input type="number" step="0.01" value="${p.BUY_RATIO}" data-symbol="${symbol}" data-key="BUY_RATIO">
+ </div>
+ <div class="card-field">
+ <label>止盈%</label>
+ <input type="number" step="0.1" value="${p.TAKE_PROFIT}" data-symbol="${symbol}" data-key="TAKE_PROFIT">
+ </div>
+ <div class="card-field">
+ <label>止损%</label>
+ <input type="number" step="0.1" value="${p.STOP_LOSS}" data-symbol="${symbol}" data-key="STOP_LOSS">
+ </div>
+ </div>
+ `;
       cardsContainer.appendChild(card);
       cardsContainer.querySelector('.no-cards')?.remove();
       bindCardEvents(card);
@@ -1572,7 +1569,6 @@
     function showApiModal() {
       apiModal.style.display = 'flex';
     }
-
     function showHelpModal() {
       helpModal.style.display = 'flex';
     }
@@ -1627,11 +1623,11 @@
       symbolList.innerHTML = '';
       SUPPORTED_COINS.forEach(coin => {
         const item = document.createElement('div');
-        item.className = 'symbol-item';
+        item.className = 'symbol-item ';
         item.innerHTML = `
-          <input type="checkbox" id="coin-${coin}" value="${coin}">
-          <label for="coin-${coin}">${coin}</label>
-        `;
+ <input type="checkbox" id="coin-${coin}" value="${coin}">
+ <label for="coin-${coin}">${coin}</label>
+ `;
         symbolList.appendChild(item);
       });
       symbolModal.style.display = 'flex';
@@ -1674,10 +1670,12 @@
     function exportParams() {
       const includeApi = confirm('是否将OKX API信息包含在导出文件中？');
       const data = {
-        api: includeApi && apiKey && apiSecret && passphrase ? { apiKey, apiSecret, passphrase } : {},
-        symbols: symbols,
-        params: params
+        symbols,
+        params
       };
+      if (includeApi && apiKey && apiSecret && passphrase) {
+        data.api = { apiKey, apiSecret, passphrase };
+      }
       const dataStr = JSON.stringify(data, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -1784,55 +1782,34 @@
       }
 
       connectBtn.addEventListener('click', showApiModal);
-      disconnectBtn.addEventListener('click', disconnectAPI);
-      saveApiBtn.addEventListener('click', async () => {
-        apiKey = apiKeyInput.value.trim();
-        apiSecret = apiSecretInput.value.trim();
-        passphrase = passphraseInput.value.trim();
-        if (!apiKey || !apiSecret || !passphrase) {
-          showNotification('请填写所有API字段', 'error');
-          return;
-        }
+      saveApiBtn.addEventListener('click', () => {
+        apiKey = apiKeyInput.value;
+        apiSecret = apiSecretInput.value;
+        passphrase = passphraseInput.value;
         localStorage.setItem('okx_api', btoa(JSON.stringify({ apiKey, apiSecret, passphrase })));
-        apiKeyInput.value = '';
-        apiSecretInput.value = '';
-        passphraseInput.value = '';
-        await connectAPI();
+        connectAPI();
       });
+      disconnectBtn.addEventListener('click', disconnectAPI);
       addSymbolBtn.addEventListener('click', showSymbolModal);
+      helpBtn.addEventListener('click', showHelpModal);
       confirmSymbolsBtn.addEventListener('click', confirmAddSymbols);
-      botStartBtn.addEventListener('click', startBot);
-      botStopBtn.addEventListener('click', stopBot);
       exportBtn.addEventListener('click', exportParams);
       importBtn.addEventListener('click', () => importInput.click());
       importInput.addEventListener('change', importParams);
+      botStartBtn.addEventListener('click', startBot);
+      botStopBtn.addEventListener('click', stopBot);
+      closeHelpBtn.addEventListener('click', closeHelpModal);
       selectAll.addEventListener('change', () => {
-        const checkboxes = cardsContainer.querySelectorAll('.card-checkbox');
-        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        cardsContainer.querySelectorAll('.card-checkbox').forEach(cb => {
+          cb.checked = selectAll.checked;
+        });
         updateBatchDeleteButton();
       });
       batchDeleteBtn.addEventListener('click', batchDelete);
-      helpBtn.addEventListener('click', showHelpModal);
-      closeHelpBtn.addEventListener('click', closeHelpModal);
-      apiModal.addEventListener('click', (e) => {
-        if (e.target === apiModal) apiModal.style.display = 'none';
-      });
-      symbolModal.addEventListener('click', (e) => {
-        if (e.target === symbolModal) symbolModal.style.display = 'none';
-      });
-      helpModal.addEventListener('click', (e) => {
-        if (e.target === helpModal) closeHelpModal();
-      });
-      tradeTypeSelect.addEventListener('change', showSymbolModal);
-      botFrequency.addEventListener('change', () => {
-        if (botRunning) {
-          clearInterval(botInterval);
-          botInterval = setInterval(tradingCycle, parseInt(botFrequency.value));
-          log(`交易频率更新为: ${botFrequency.options[botFrequency.selectedIndex].text}`);
-        }
-      });
-      updateCards();
-    } init();  
+      initSortable();
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 
